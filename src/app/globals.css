@@ -1,26 +1,493 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ═══════════════════════════════════════════════════════════════
+   COTCOT FLOOD ALERT — "Smart Sky" design system
+   iOS Weather-inspired: one continuous sky gradient, glass cards.
+   Dark + Light appearances, switched via [data-theme].
+   ═══════════════════════════════════════════════════════════════ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* ── Core semantic tokens (theme-switchable via CSS vars) ── */
+  --color-on-sky: var(--on-sky);
+  --color-on-sky-dim: var(--on-sky-dim);
+  --color-on-sky-faint: var(--on-sky-faint);
+  --color-glass: var(--glass-card);
+  --color-glass-card: var(--glass-card);
+  --color-glass-elevated: var(--glass-elevated);
+  --color-glass-strong: var(--glass-strong);
+  --color-glass-border: var(--glass-border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-dark);
+
+  /* ── Flood status (semantic) ── */
+  --color-safe: var(--st-safe);
+  --color-watch: var(--st-watch);
+  --color-warning: var(--st-warning);
+  --color-danger: var(--st-danger);
+  --color-safe-fill: var(--st-safe-fill);
+  --color-watch-fill: var(--st-watch-fill);
+  --color-warning-fill: var(--st-warning-fill);
+  --color-danger-fill: var(--st-danger-fill);
+  --color-accent-fill: var(--accent-fill);
+
+  /* ── Legacy MD3 aliases → remapped onto Smart Sky (graceful fallback) ── */
+  --color-on-surface: var(--on-sky);
+  --color-on-surface-variant: var(--on-sky-dim);
+  --color-surface: var(--sky-top);
+  --color-surface-bright: var(--sky-mid);
+  --color-surface-dim: var(--sky-bottom);
+  --color-surface-container-lowest: var(--glass-card);
+  --color-surface-container-low: var(--glass-card);
+  --color-surface-container: var(--glass-elevated);
+  --color-surface-container-high: var(--glass-border);
+  --color-surface-container-highest: var(--glass-border);
+  --color-outline: var(--on-sky-faint);
+  --color-outline-variant: var(--on-sky-faint);
+  --color-inverse-surface: var(--glass-elevated);
+  --color-inverse-on-surface: var(--on-sky);
+  --color-surface-tint: var(--accent);
+  --color-surface-variant: var(--glass-elevated);
+
+  --color-primary: var(--accent-strong);
+  --color-on-primary: var(--on-dark);
+  --color-primary-container: var(--accent-fill);
+  --color-on-primary-container: var(--accent-strong);
+  --color-inverse-primary: var(--accent);
+  --color-primary-fixed: var(--accent-strong);
+  --color-primary-fixed-dim: var(--accent);
+  --color-on-primary-fixed: var(--on-sky);
+  --color-on-primary-fixed-variant: var(--accent-strong);
+
+  --color-secondary: var(--accent);
+  --color-on-secondary: var(--on-dark);
+  --color-secondary-container: var(--accent-fill);
+  --color-on-secondary-container: var(--accent-strong);
+  --color-secondary-fixed: var(--accent);
+  --color-secondary-fixed-dim: var(--accent);
+  --color-on-secondary-fixed: var(--on-dark);
+  --color-on-secondary-fixed-variant: var(--accent-strong);
+
+  --color-tertiary: var(--st-safe);
+  --color-on-tertiary: var(--on-dark);
+  --color-tertiary-container: var(--st-safe-fill);
+  --color-on-tertiary-container: var(--st-safe);
+  --color-tertiary-fixed: var(--st-safe);
+  --color-tertiary-fixed-dim: var(--st-safe);
+  --color-on-tertiary-fixed: var(--st-safe-ink);
+  --color-on-tertiary-fixed-variant: var(--st-safe);
+
+  --color-error: var(--st-danger);
+  --color-on-error: var(--on-dark);
+  --color-error-container: var(--st-danger-fill);
+  --color-on-error-container: var(--st-danger);
+
+  --color-teal-deep: var(--sky-top);
+  --color-teal: var(--accent);
+  --color-teal-light: var(--accent-fill);
+  --color-aqua-bg: var(--glass-card);
+  --color-text-primary: var(--on-sky);
+  --color-text-secondary: var(--on-sky-dim);
+  --color-text-muted: var(--on-sky-faint);
+  --color-border: var(--glass-border);
+  --color-safe-bg: var(--st-safe-fill);
+  --color-watch-bg: var(--st-watch-fill);
+  --color-warning-bg: var(--st-warning-fill);
+  --color-danger-bg: var(--st-danger-fill);
+  --color-sidebar: transparent;
+  --color-sidebar-hover: var(--glass-elevated);
+  --color-sidebar-active: var(--glass-strong);
+
+  /* ── Typography ── */
+  --font-sans: var(--font-geist), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
+  /* ── Radius ── */
+  --radius-sm: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────
+   Theme variables
+   Default (dark) applied to :root; both also
+   re-keyed per sky condition via [data-sky=…]
+   ───────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  --glass-card: rgba(255, 255, 255, 0.09);
+  --glass-elevated: rgba(255, 255, 255, 0.16);
+  --glass-strong: rgba(255, 255, 255, 0.22);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --on-sky: #f5f9ff;
+  --on-sky-dim: rgba(245, 249, 255, 0.74);
+  --on-sky-faint: rgba(245, 249, 255, 0.5);
+  --on-dark: #ffffff;
+  --sky-shadow: 0 18px 50px -12px rgba(3, 14, 34, 0.5);
+  --shadow-tint: rgba(3, 14, 34, 0.4);
+
+  --st-safe: #34d399;
+  --st-safe-ink: #06301f;
+  --st-safe-fill: rgba(52, 211, 153, 0.16);
+  --st-watch: #fbbf24;
+  --st-watch-fill: rgba(251, 191, 36, 0.16);
+  --st-warning: #fb923c;
+  --st-warning-fill: rgba(251, 146, 60, 0.16);
+  --st-danger: #f87171;
+  --st-danger-fill: rgba(248, 113, 113, 0.18);
+
+  --accent: #7cb8f5;
+  --accent-strong: #a5cdff;
+  --accent-fill: rgba(124, 184, 245, 0.18);
+  --accent-inset: inset 0 1px 0 rgba(165, 205, 255, 0.35);
 }
+
+:root[data-theme="light"] {
+  --glass-card: rgba(255, 255, 255, 0.48);
+  --glass-elevated: rgba(255, 255, 255, 0.74);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.78);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --on-sky: #0d2440;
+  --on-sky-dim: rgba(13, 36, 64, 0.72);
+  --on-sky-faint: rgba(13, 36, 64, 0.55);
+  --on-dark: #ffffff;
+  --sky-shadow: 0 18px 50px -16px rgba(15, 48, 90, 0.28);
+  --shadow-tint: rgba(15, 48, 90, 0.18);
+
+  --st-safe: #0e8a56;
+  --st-safe-ink: #06301f;
+  --st-safe-fill: rgba(255, 255, 255, 0.55);
+  --st-watch: #a16207;
+  --st-watch-fill: rgba(255, 255, 255, 0.55);
+  --st-warning: #c2410c;
+  --st-warning-fill: rgba(255, 255, 255, 0.55);
+  --st-danger: #b91c1c;
+  --st-danger-fill: rgba(255, 255, 255, 0.55);
+
+  --accent: #1d4ed8;
+  --accent-strong: #1e3a8a;
+  --accent-fill: rgba(255, 255, 255, 0.55);
+  --accent-inset: inset 0 1px 0 rgba(29, 78, 216, 0.25);
+}
+
+/* ── Sky condition overrides ───────────────────────── */
+:root[data-sky="clear"],
+:root[data-sky="clear"][data-theme="dark"] { --sky-top: #14306b; --sky-mid: #1e57b0; --sky-bottom: #3e7ad6; }
+:root[data-sky="clear"][data-theme="light"] { --sky-top: #3e8ff0; --sky-mid: #7ebdf5; --sky-bottom: #cfe9fb; }
+
+:root[data-sky="clouds"],
+:root[data-sky="clouds"][data-theme="dark"] { --sky-top: #33415a; --sky-mid: #4d617a; --sky-bottom: #6b7f96; }
+:root[data-sky="clouds"][data-theme="light"] { --sky-top: #7f9ec2; --sky-mid: #a9c0d8; --sky-bottom: #d3e1ee; }
+
+:root[data-sky="rain"],
+:root[data-sky="rain"][data-theme="dark"] { --sky-top: #26334c; --sky-mid: #3d5169; --sky-bottom: #5b6f87; }
+:root[data-sky="rain"][data-theme="light"] { --sky-top: #5d7898; --sky-mid: #8ba3bd; --sky-bottom: #bed0df; }
+
+:root[data-sky="storm"],
+:root[data-sky="storm"][data-theme="dark"] { --sky-top: #172238; --sky-mid: #2c3a56; --sky-bottom: #46536e; }
+:root[data-sky="storm"][data-theme="light"] { --sky-top: #4a5b83; --sky-mid: #7886a6; --sky-bottom: #a8b2c8; }
+
+:root[data-sky="night"],
+:root[data-sky="night"][data-theme="dark"] { --sky-top: #0b1528; --sky-mid: #18294d; --sky-bottom: #244066; }
+:root[data-sky="night"][data-theme="light"] { --sky-top: #1e3a6e; --sky-mid: #3d5f92; --sky-bottom: #5e83b2; }
+
+/* Loop defaults (used when no condition attr) */
+:root { --sky-top: #142a50; --sky-mid: #1d4270; --sky-bottom: #2e5c8a; }
+:root[data-theme="light"] { --sky-top: #4a9af0; --sky-mid: #8ec6f7; --sky-bottom: #dceefc; }
+
+/* ─────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--sky-top);
+  color: var(--on-sky);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+
+::selection { background: rgba(124, 184, 245, 0.35); }
+
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 75%, white);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ─────────────────────────────────────────────
+   Typography utilities
+   ───────────────────────────────────────────── */
+.font-display-lg { font-size: 2.5rem; font-weight: 700; line-height: 3rem; letter-spacing: -0.02em; }
+.font-headline-lg { font-size: 1.875rem; font-weight: 600; line-height: 2.375rem; letter-spacing: -0.015em; }
+.font-headline-lg-mobile { font-size: 1.5rem; font-weight: 600; line-height: 2rem; letter-spacing: -0.01em; }
+.font-headline-md { font-size: 1.375rem; font-weight: 600; line-height: 1.75rem; }
+.font-title-lg { font-size: 1.125rem; font-weight: 600; line-height: 1.5rem; }
+.font-title-sm { font-size: 0.9375rem; font-weight: 500; line-height: 1.25rem; }
+.font-body-lg { font-size: 1rem; font-weight: 400; line-height: 1.5rem; }
+.font-body-md { font-size: 0.875rem; font-weight: 400; line-height: 1.25rem; }
+.font-label-md { font-size: 0.75rem; font-weight: 600; line-height: 1rem; letter-spacing: 0.04em; }
+.font-label-sm { font-size: 0.6875rem; font-weight: 500; line-height: 0.875rem; letter-spacing: 0.02em; }
+.font-metric-huge { font-size: 3rem; font-weight: 700; line-height: 3.25rem; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.font-metric-lg { font-size: 2rem; font-weight: 600; line-height: 2.25rem; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ─────────────────────────────────────────────
+   Sky surface
+   Applies the gradient derived from --sky-* stops.
+   ───────────────────────────────────────────── */
+.sky-surface {
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-mid) 58%, var(--sky-bottom));
+}
+
+/* ─────────────────────────────────────────────
+   Glass component system
+   ───────────────────────────────────────────── */
+.glass-card {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--sky-shadow), var(--glass-inset);
+}
+
+.glass-card-flat {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+.glass-chip {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 9999px;
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+.interactive-card {
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--glass-border) 70%, var(--accent));
+}
+.interactive-card:active { transform: scale(0.985); }
+
+/* Legacy .card / .glass shims → glass-card */
+.card, .card-flat { background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 1.5rem; box-shadow: var(--sky-shadow), var(--glass-inset); }
+.glass { background: var(--glass-card); border: 1px solid var(--glass-border); backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%); }
+.glass-dark { background: var(--glass-card); border: 1px solid var(--glass-border); backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); box-shadow: var(--glass-inset); }
+
+/* ─────────────────────────────────────────────
+   Buttons (iOS floating pill)
+   ───────────────────────────────────────────── */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-sky);
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px) saturate(160%);
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+.pill-btn:hover { background: var(--glass-elevated); }
+.pill-btn:active { transform: scale(0.95); }
+
+.pill-btn-primary {
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  border: 1px solid color-mix(in oklab, var(--accent-strong) 60%, white);
+  box-shadow: var(--accent-inset), 0 8px 24px -8px rgba(29, 78, 216, 0.5);
+}
+.pill-btn-primary:hover { filter: brightness(1.08); }
+[data-theme="dark"] .pill-btn-primary {
+  background: linear-gradient(180deg, #7cb8f5, #4f9ff0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 24px -8px rgba(80, 155, 240, 0.55);
+}
+
+/* Secondary glass pill button */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  color: var(--on-sky);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  transition: background 0.25s ease, transform 0.2s ease, border-color 0.25s ease;
+}
+.glass-btn:hover { background: var(--glass-elevated); }
+.glass-btn:active { transform: scale(0.97); }
+
+/* Glass text inputs */
+.glass-input {
+  width: 100%;
+  border-radius: 1rem;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  padding: 0.625rem 1rem;
+  color: var(--on-sky);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.glass-input::placeholder { color: var(--on-sky-faint); }
+.glass-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--glass-elevated);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+
+/* Status chips */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* ─────────────────────────────────────────────
+   Top iOS-style tab bar
+   ───────────────────────────────────────────── */
+.top-tabbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--sky-shadow), var(--glass-inset);
+}
+
+.top-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--on-sky-dim);
+  white-space: nowrap;
+  transition: background 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), color 0.2s ease;
+}
+.top-tab:hover { color: var(--on-sky); background: var(--glass-elevated); }
+.top-tab-active,
+.top-tab-active:hover {
+  color: #0d2440;
+  font-weight: 600;
+}
+.top-tab > *:not(.top-tab-pill) {
+  position: relative;
+  z-index: 1;
+}
+.top-tab-pill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 4px rgba(13, 36, 64, 0.15);
+}
+
+/* Gradient scrim behind the sticky header so scrolled content blends into the sky */
+.top-scrim {
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-top) 30%, color-mix(in oklab, var(--sky-top) 55%, transparent) 75%, transparent 100%);
+}
+
+/* ─────────────────────────────────────────────
+   Leaflet dark-map treatment (dark mode)
+   ───────────────────────────────────────────── */
+[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(190deg) saturate(0.55) brightness(0.9) contrast(0.92); }
+[data-theme="dark"] .leaflet-popup-content-wrapper {
+  background: rgba(18, 30, 50, 0.92);
+  color: var(--on-sky);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14px);
+}
+[data-theme="dark"] .leaflet-popup-tip { background: rgba(18, 30, 50, 0.92); }
+[data-theme="dark"] .leaflet-control-zoom a {
+  background: rgba(18, 30, 50, 0.85);
+  color: var(--on-sky);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+[data-theme="dark"] .leaflet-control-zoom a:hover { background: rgba(60, 80, 110, 0.9); }
+
+/* ─────────────────────────────────────────────
+   Scroll snap + helpers
+   ───────────────────────────────────────────── */
+.snap-x-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.snap-x-strip > * { scroll-snap-align: start; flex-shrink: 0; }
+
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ─────────────────────────────────────────────
+   Motion
+   ───────────────────────────────────────────── */
+@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+
+.animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+@keyframes slide-down { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+.animate-slide-down { animation: slide-down 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
