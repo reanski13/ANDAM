@@ -5,35 +5,170 @@ import type { Map as LeafletMap, LayerGroup } from "leaflet";
 import DashboardHeader from "@/components/DashboardHeader";
 import Reveal from "@/components/motion/Reveal";
 import { EVACUATION_CENTERS, COTCOT } from "@/lib/constants";
+import type { MapCenter, HazardZone, RiverSensor, FloodIncidentSummary } from "@/lib/db/reference";
 
 type MapWithLayers = LeafletMap & {
   _hazardGroup?: LayerGroup;
   _sensorGroup?: LayerGroup;
   _centerGroup?: LayerGroup;
+  _incidentGroup?: LayerGroup;
 };
 
-const SENSOR_MARKERS = [
-  { name: "Cotcot Bridge", stationId: "Stn-01", level: 1.85, normal: 2.5, flow: "14.2 m\u00b3/s", status: "normal" as const, lat: 10.3015, lon: 123.9818 },
-  { name: "Masagana Creek", stationId: "Stn-02", level: 1.20, normal: 1.6, flow: "8.7 m\u00b3/s", status: "alert" as const, lat: 10.2988, lon: 123.9845 },
-];
+interface MapPageData {
+  centers: MapCenter[];
+  zones: HazardZone[];
+  sensors: RiverSensor[];
+  incidents: FloodIncidentSummary[];
+}
 
-const CENTER_META: Record<string, { capacity: number; sector: string }> = {
-  "Cotcot Barangay Hall": { capacity: 350, sector: "Sector A" },
-  "Cotcot Elementary School": { capacity: 600, sector: "Sector B" },
-  "Liloan Municipal Gymnasium": { capacity: 800, sector: "Municipal Hub" },
-  "Sacred Heart School - Cotcot": { capacity: 400, sector: "Sector C" },
+const ZONE_STYLES: Record<string, { color: string; fillOpacity: number; weight: number; dashArray: string }> = {
+  critical: { color: "#7f1d1d", fillOpacity: 0.2, weight: 2.5, dashArray: "7 5" },
+  high: { color: "#ba1a1a", fillOpacity: 0.15, weight: 2, dashArray: "6 4" },
+  moderate: { color: "#ea580c", fillOpacity: 0.12, weight: 1.5, dashArray: "4 4" },
+  low: { color: "#eab308", fillOpacity: 0.1, weight: 1, dashArray: "3 3" },
 };
 
-const FLOOD_ZONES = [
-  { name: "Purok Masagana Lowland", risk: "high" as const, color: "#ba1a1a" },
-  { name: "Cotcot River Mouth", risk: "high" as const, color: "#ba1a1a" },
-  { name: "Purok Suba Coastal", risk: "moderate" as const, color: "#ea580c" },
-  { name: "Inland Low-lying Areas", risk: "low" as const, color: "#eab308" },
+const INCIDENT_COLORS: Record<string, string> = {
+  critical: "#7f1d1d",
+  high: "#dc2626",
+  moderate: "#ea580c",
+  low: "#eab308",
+};
+
+const FALLBACK_SENSORS: RiverSensor[] = [
+  {
+    id: "fallback-stn-01",
+    stationId: "Stn-01",
+    name: "Cotcot Bridge",
+    purok: null,
+    lat: 10.3015,
+    lon: 123.9818,
+    normalLevelM: 2.5,
+    warningLevelM: null,
+    dangerLevelM: null,
+    status: "normal",
+    dataSource: "simulated",
+    isSimulated: true,
+    latest: { timestamp: "", waterLevelM: 1.85, flowCms: 14.2, batteryPct: null },
+  },
+  {
+    id: "fallback-stn-02",
+    stationId: "Stn-02",
+    name: "Masagana Creek",
+    purok: null,
+    lat: 10.2988,
+    lon: 123.9845,
+    normalLevelM: 1.6,
+    warningLevelM: null,
+    dangerLevelM: null,
+    status: "alert",
+    dataSource: "simulated",
+    isSimulated: true,
+    latest: { timestamp: "", waterLevelM: 1.2, flowCms: 8.7, batteryPct: null },
+  },
 ];
+
+const FALLBACK_CENTERS: MapCenter[] = EVACUATION_CENTERS.map((center) => {
+  const meta: Record<string, { capacity?: number; sector?: string }> = {
+    "Cotcot Barangay Hall": { capacity: 350, sector: "Sector A" },
+    "Cotcot Elementary School": { capacity: 600, sector: "Sector B" },
+    "Liloan Municipal Gymnasium": { capacity: 800, sector: "Municipal Hub" },
+    "Sacred Heart School - Cotcot": { capacity: 400, sector: "Sector C" },
+  };
+  const m = meta[center.name] ?? {};
+  return {
+    id: `fallback-${center.name}`,
+    name: center.name,
+    address: center.address,
+    purok: null,
+    lat: center.lat,
+    lon: center.lon,
+    capacity: m.capacity ?? 0,
+    role: null,
+    sector: m.sector ?? "",
+    elevationM: null,
+    elevationLabel: null,
+    imageQuery: null,
+    amenities: [],
+    contact: null,
+  };
+});
+
+const FALLBACK_ZONES: HazardZone[] = [
+  { id: "fallback-zone-1", name: "Purok Masagana Lowland", severity: "high", radiusM: 300, lat: 10.3005, lon: 123.9833, description: null },
+  { id: "fallback-zone-2", name: "Cotcot River Mouth", severity: "high", radiusM: 300, lat: 10.2995, lon: 123.9828, description: null },
+  { id: "fallback-zone-3", name: "Purok Suba Coastal", severity: "moderate", radiusM: 250, lat: 10.3008, lon: 123.984, description: null },
+  { id: "fallback-zone-4", name: "Inland Low-lying Areas", severity: "low", radiusM: 350, lat: 10.2998, lon: 123.982, description: null },
+];
+
+const FALLBACK_DATA: MapPageData = {
+  centers: FALLBACK_CENTERS,
+  zones: FALLBACK_ZONES,
+  sensors: FALLBACK_SENSORS,
+  incidents: [],
+};
+
+function sensorPopup(sensor: RiverSensor, color: string): string {
+  const level = sensor.latest?.waterLevelM;
+  const normal = sensor.normalLevelM;
+  const flow = sensor.latest?.flowCms;
+  return `
+    <div style="font-family:inherit;padding:4px 0;min-width:160px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${sensor.name}</div>
+      <div style="font-size:12px;color:#666;margin-bottom:6px">${sensor.stationId ?? ""}</div>
+      <div style="font-size:14px;font-weight:700;color:${color}">${level != null ? level.toFixed(2) : "--"} m <span style="font-weight:400;font-size:11px;color:#666">${normal != null ? `/ ${normal.toFixed(2)}m` : ""}</span></div>
+      <div style="font-size:11px;color:#666;margin-top:2px">Flow: ${flow != null ? `${flow.toFixed(1)} m\u00b3/s` : "--"}</div>
+    </div>`;
+}
+
+function centerPopup(center: MapCenter): string {
+  const capacity = center.capacity != null ? center.capacity : 0;
+  return `
+    <div style="font-family:inherit;padding:4px 0;min-width:160px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${center.name}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:6px">${center.sector ?? ""}</div>
+      <div style="font-size:12px;color:#10855a;font-weight:600">Capacity: ${capacity} persons</div>
+      <div style="font-size:12px;color:#10855a;font-weight:600;margin-top:2px">Status: Standby / Ready</div>
+      <a href="https://maps.google.com/?q=${center.lat},${center.lon}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#00685d;font-weight:600;text-decoration:none">Get Directions \u2192</a>
+    </div>`;
+}
+
+function incidentPopup(incident: FloodIncidentSummary, color: string): string {
+  const when = incident.timestamp
+    ? new Date(incident.timestamp).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "";
+  const waterLevelM = incident.waterLevelCm != null ? incident.waterLevelCm / 100 : null;
+  return `
+    <div style="font-family:inherit;padding:4px 0;min-width:170px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${incident.location ?? "Flood Incident"}</div>
+      <div style="font-size:12px;color:#fff;background:${color};display:inline-block;padding:1px 8px;border-radius:999px;margin-bottom:4px">${(incident.severity ?? "unknown").toUpperCase()}</div>
+      <div style="font-size:12px;color:#666">Water level: ${waterLevelM != null ? `${waterLevelM.toFixed(2)} m` : "--"}</div>
+      <div style="font-size:11px;color:#666;margin-top:2px">${when} \u2022 Reported & verified</div>
+    </div>`;
+}
+
+async function resolveMapData(): Promise<MapPageData> {
+  try {
+    const res = await fetch("/api/map-data", { headers: { Accept: "application/json" } });
+    if (!res.ok) return FALLBACK_DATA;
+    const json = (await res.json()) as { data?: Partial<MapPageData> };
+    const data = json.data;
+    if (!data || !Array.isArray(data.centers) || !Array.isArray(data.zones) || !Array.isArray(data.sensors) || !Array.isArray(data.incidents)) {
+      return FALLBACK_DATA;
+    }
+    if (data.centers.length === 0 && data.zones.length === 0 && data.sensors.length === 0) {
+      return FALLBACK_DATA;
+    }
+    return { centers: data.centers, zones: data.zones, sensors: data.sensors, incidents: data.incidents };
+  } catch {
+    return FALLBACK_DATA;
+  }
+}
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<MapWithLayers | null>(null);
+  const [mapData, setMapData] = useState<MapPageData>(FALLBACK_DATA);
   const [layers, setLayers] = useState({ hazard: true, sensors: true, centers: true });
 
   useEffect(() => {
@@ -42,10 +177,14 @@ export default function MapPage() {
     let cancelled = false;
 
     (async () => {
-      const L = (await import("leaflet")).default;
+      const [resolved, L] = await Promise.all([
+        resolveMapData(),
+        import("leaflet").then((m) => m.default),
+      ]);
       await import("leaflet/dist/leaflet.css");
 
       if (cancelled || !mapRef.current) return;
+      setMapData(resolved);
 
       const map = L.map(mapRef.current, {
         center: [COTCOT.lat, COTCOT.lon],
@@ -62,57 +201,56 @@ export default function MapPage() {
 
       // Flood hazard zones as circular overlays
       const hazardGroup = L.layerGroup();
-      const highRiskCoords: [number, number][] = [
-        [10.3005, 123.9833],
-        [10.2995, 123.9828],
-      ];
-      highRiskCoords.forEach((coords) => {
-        L.circle(coords, { radius: 300, color: "#ba1a1a", fillColor: "#ba1a1a", fillOpacity: 0.15, weight: 2, dashArray: "6 4" }).addTo(hazardGroup);
+      resolved.zones.forEach((zone) => {
+        if (zone.lat == null || zone.lon == null || zone.radiusM == null) return;
+        const style = ZONE_STYLES[zone.severity] ?? ZONE_STYLES.low;
+        L.circle([zone.lat, zone.lon], {
+          radius: zone.radiusM,
+          color: style.color,
+          fillColor: style.color,
+          fillOpacity: style.fillOpacity,
+          weight: style.weight,
+          dashArray: style.dashArray,
+        }).addTo(hazardGroup);
       });
-      L.circle([10.3008, 123.9840], { radius: 250, color: "#ea580c", fillColor: "#ea580c", fillOpacity: 0.12, weight: 1.5, dashArray: "4 4" }).addTo(hazardGroup);
-      L.circle([10.2998, 123.9820], { radius: 350, color: "#eab308", fillColor: "#eab308", fillOpacity: 0.1, weight: 1, dashArray: "3 3" }).addTo(hazardGroup);
       hazardGroup.addTo(map);
 
-      // Sensor markers
+      // River water level sensor markers
       const sensorGroup = L.layerGroup();
-      SENSOR_MARKERS.forEach((s) => {
-        const color = s.status === "alert" ? "#ea580c" : "#00685d";
-        const marker = L.circleMarker([s.lat, s.lon], { radius: 8, color: "#ffffff", fillColor: color, fillOpacity: 1, weight: 3 });
-        const popup = `
-          <div style="font-family:inherit;padding:4px 0;min-width:160px">
-            <div style="font-weight:700;font-size:13px;margin-bottom:4px">${s.name}</div>
-            <div style="font-size:12px;color:#666;margin-bottom:6px">${s.stationId}</div>
-            <div style="font-size:14px;font-weight:700;color:${color}">${s.level.toFixed(2)} m <span style="font-weight:400;font-size:11px;color:#666">/ ${s.normal.toFixed(2)}m</span></div>
-            <div style="font-size:11px;color:#666;margin-top:2px">Flow: ${s.flow}</div>
-          </div>`;
-        marker.bindPopup(popup);
+      resolved.sensors.forEach((sensor) => {
+        const color = sensor.status === "alert" ? "#ea580c" : "#00685d";
+        const marker = L.circleMarker([sensor.lat, sensor.lon], { radius: 8, color: "#ffffff", fillColor: color, fillOpacity: 1, weight: 3 });
+        marker.bindPopup(sensorPopup(sensor, color));
         marker.addTo(sensorGroup);
       });
       sensorGroup.addTo(map);
 
       // Evacuation center markers
       const centerGroup = L.layerGroup();
-      EVACUATION_CENTERS.forEach((c) => {
-        const meta = CENTER_META[c.name] ?? { capacity: 0, sector: "" };
-        const marker = L.circleMarker([c.lat, c.lon], { radius: 10, color: "#ffffff", fillColor: "#10855a", fillOpacity: 1, weight: 3 });
-        const popup = `
-          <div style="font-family:inherit;padding:4px 0;min-width:160px">
-            <div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.name}</div>
-            <div style="font-size:11px;color:#666;margin-bottom:6px">${meta.sector}</div>
-            <div style="font-size:12px;color:#10855a;font-weight:600">Capacity: ${meta.capacity} persons</div>
-            <div style="font-size:12px;color:#10855a;font-weight:600;margin-top:2px">Status: Standby / Ready</div>
-            <a href="https://maps.google.com/?q=${c.lat},${c.lon}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#00685d;font-weight:600;text-decoration:none">Get Directions \u2192</a>
-          </div>`;
-        marker.bindPopup(popup);
+      resolved.centers.forEach((center) => {
+        const marker = L.circleMarker([center.lat, center.lon], { radius: 10, color: "#ffffff", fillColor: "#10855a", fillOpacity: 1, weight: 3 });
+        marker.bindPopup(centerPopup(center));
         marker.addTo(centerGroup);
       });
       centerGroup.addTo(map);
+
+      // Verified flood incident markers
+      const incidentGroup = L.layerGroup();
+      resolved.incidents.forEach((incident) => {
+        if (incident.lat == null || incident.lon == null) return;
+        const color = INCIDENT_COLORS[incident.severity ?? ""] ?? "#dc2626";
+        const marker = L.circleMarker([incident.lat, incident.lon], { radius: 7, color: "#ffffff", fillColor: color, fillOpacity: 0.9, weight: 2 });
+        marker.bindPopup(incidentPopup(incident, color));
+        marker.addTo(incidentGroup);
+      });
+      incidentGroup.addTo(map);
 
       // Store for toggling
       mapInstanceRef.current = map;
       map._hazardGroup = hazardGroup;
       map._sensorGroup = sensorGroup;
       map._centerGroup = centerGroup;
+      map._incidentGroup = incidentGroup;
     })();
 
     return () => {
@@ -223,23 +361,28 @@ export default function MapPage() {
                   <span className="w-2.5 h-2.5 rounded-full bg-watch animate-pulse" />
                   <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Hydrological Gauges</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm font-semibold tracking-tight">2 Active</span>
+                <span className="px-2 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm font-semibold tracking-tight">{mapData.sensors.length} Active</span>
               </div>
               <div className="flex flex-col gap-2">
-                {SENSOR_MARKERS.map((s) => (
-                  <div key={s.stationId} className="flex items-center justify-between p-2 rounded-xl bg-glass">
-                    <div className="flex flex-col">
-                      <span className="font-label-md text-label-md text-on-sky font-semibold tracking-tight">{s.name} ({s.stationId})</span>
-                      <span className="font-label-sm text-label-sm text-on-sky-dim tracking-tight">Flow rate: {s.flow}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className={`font-title-sm text-title-sm ${s.status === "alert" ? "text-warning" : "text-accent-strong"} font-bold tracking-tight`}>{s.level.toFixed(2)} m</span>
-                      <div className={`font-label-sm text-label-sm ${s.status === "alert" ? "text-warning" : "text-safe"} font-semibold flex items-center gap-0.5 justify-end`}>
-                        <span className="material-symbols-outlined text-[12px]">{s.status === "alert" ? "warning" : "check_circle"}</span> {s.status === "alert" ? "Elevated" : "Normal"}
+                {mapData.sensors.map((sensor) => {
+                  const level = sensor.latest?.waterLevelM;
+                  const flow = sensor.latest?.flowCms;
+                  const isAlert = sensor.status === "alert";
+                  return (
+                    <div key={sensor.stationId ?? sensor.id} className="flex items-center justify-between p-2 rounded-xl bg-glass">
+                      <div className="flex flex-col">
+                        <span className="font-label-md text-label-md text-on-sky font-semibold tracking-tight">{sensor.name} ({sensor.stationId ?? "—"})</span>
+                        <span className="font-label-sm text-label-sm text-on-sky-dim tracking-tight">Flow rate: {flow != null ? `${flow.toFixed(1)} m\u00b3/s` : "—"}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className={`font-title-sm text-title-sm ${isAlert ? "text-warning" : "text-accent-strong"} font-bold tracking-tight`}>{level != null ? `${level.toFixed(2)} m` : "--"}</span>
+                        <div className={`font-label-sm text-label-sm ${isAlert ? "text-warning" : "text-safe"} font-semibold flex items-center gap-0.5 justify-end`}>
+                          <span className="material-symbols-outlined text-[12px]">{isAlert ? "warning" : "check_circle"}</span> {isAlert ? "Elevated" : "Normal"}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -249,10 +392,10 @@ export default function MapPage() {
                 <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Flood Risk Legend</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                {FLOOD_ZONES.map((z) => (
-                  <div key={z.name} className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: z.color, opacity: 0.7 }} />
-                    <span className="font-label-sm text-label-sm text-on-sky-dim">{z.name}</span>
+                {mapData.zones.map((zone) => (
+                  <div key={zone.id} className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: ZONE_STYLES[zone.severity]?.color ?? "#6b7280", opacity: 0.7 }} />
+                    <span className="font-label-sm text-label-sm text-on-sky-dim">{zone.name}</span>
                   </div>
                 ))}
               </div>
@@ -271,7 +414,7 @@ export default function MapPage() {
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span className="flex items-center gap-1 text-safe font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-safe" /> Live Telemetry Connected
+                <span className="w-1.5 h-1.5 rounded-full bg-safe" /> Reference Telemetry (Simulated)
               </span>
             </div>
           </div>

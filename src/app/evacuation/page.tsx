@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, ViewTransition } from "react";
+import { useState, useEffect, ViewTransition } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import Reveal from "@/components/motion/Reveal";
 import { EVACUATION_CENTERS, EMERGENCY_CONTACTS } from "@/lib/constants";
+import type { MapCenter } from "@/lib/db/reference";
 
 const CENTER_META: Record<string, { role: string; sector: string; capacity: number; imageQuery: string; amenities: string[]; elevation: string }> = {
   "Cotcot Barangay Hall": {
@@ -39,6 +40,35 @@ const CENTER_META: Record<string, { role: string; sector: string; capacity: numb
     elevation: "Direct Highway Access • Well Lit Perimeter",
   },
 };
+
+interface CenterCard {
+  key: string;
+  name: string;
+  address: string | null;
+  lat: number;
+  lon: number;
+  role: string | null;
+  sector: string | null;
+  capacity: number;
+  amenities: string[];
+  elevation: string | null;
+}
+
+const FALLBACK_CENTER_CARDS: CenterCard[] = EVACUATION_CENTERS.map((center) => {
+  const meta = CENTER_META[center.name] ?? { role: "", sector: "", capacity: 0, imageQuery: "", amenities: [], elevation: "" };
+  return {
+    key: center.name,
+    name: center.name,
+    address: center.address,
+    lat: center.lat,
+    lon: center.lon,
+    role: meta.role,
+    sector: meta.sector,
+    capacity: meta.capacity,
+    amenities: meta.amenities,
+    elevation: meta.elevation,
+  };
+});
 
 const AMENITY_ICONS: Record<string, string> = {
   "Generator Equipped": "electrical_services",
@@ -195,6 +225,40 @@ const SAFETY_GUIDE: AccordionItem[] = [
 
 export default function EvacuationPage() {
   const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set(["before"]));
+  const [centers, setCenters] = useState<CenterCard[]>(FALLBACK_CENTER_CARDS);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/map-data", { headers: { Accept: "application/json" } });
+        if (!res.ok) return;
+        const json = (await res.json()) as { data?: { centers?: MapCenter[] } };
+        const list = json?.data?.centers;
+        if (!list || list.length === 0) return;
+        const cards: CenterCard[] = list.map((center) => ({
+          key: center.id,
+          name: center.name,
+          address: center.address,
+          lat: center.lat,
+          lon: center.lon,
+          role: center.role,
+          sector: center.sector,
+          capacity: center.capacity ?? 0,
+          amenities: center.amenities,
+          elevation: center.elevationLabel,
+        }));
+        if (!cancelled) setCenters(cards);
+      } catch {
+        // keep fallback centers
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const toggleAccordion = (id: string) => {
     setOpenAccordions((prev) => {
@@ -208,7 +272,7 @@ export default function EvacuationPage() {
     });
   };
 
-  const totalCapacity = Object.values(CENTER_META).reduce((sum, m) => sum + m.capacity, 0);
+  const totalCapacity = centers.reduce((sum, center) => sum + center.capacity, 0);
 
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
@@ -240,7 +304,7 @@ export default function EvacuationPage() {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-safe" />
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-3">
-                <span className="font-label-md text-label-md uppercase tracking-wider text-safe font-bold">ALL 4 DESIGNATED CENTERS ARE ON STANDBY STATUS</span>
+                <span className="font-label-md text-label-md uppercase tracking-wider text-safe font-bold">ALL {centers.length} DESIGNATED CENTERS ARE ON STANDBY STATUS</span>
                 <span className="hidden sm:inline text-on-sky-faint">•</span>
                 <span className="font-label-sm text-label-sm text-on-sky-dim font-medium">Power & Clean Water Verified by Cotcot BDRRMO</span>
               </div>
@@ -282,7 +346,7 @@ export default function EvacuationPage() {
                 </div>
                 <div className="bg-glass p-3 rounded-2xl">
                   <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Shelters Ready</span>
-                  <span className="font-headline-md text-headline-md text-on-sky font-bold">4 / 4</span>
+                  <span className="font-headline-md text-headline-md text-on-sky font-bold">{centers.length} / {centers.length}</span>
                   <span className="font-label-sm text-label-sm text-accent-strong font-medium block mt-0.5">Inspected & cleared</span>
                 </div>
                 <div className="bg-glass p-3 rounded-2xl">
@@ -335,22 +399,21 @@ export default function EvacuationPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {EVACUATION_CENTERS.map((center) => {
-              const meta = CENTER_META[center.name] ?? { role: "", sector: "", capacity: 0, imageQuery: "", amenities: [], elevation: "" };
+            {centers.map((center) => {
               return (
-                <article key={center.name} className="glass-card p-6 flex flex-col justify-between interactive-card">
+                <article key={center.key} className="glass-card p-6 flex flex-col justify-between interactive-card">
                   <div className="flex flex-col gap-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="bg-accent-fill text-accent-strong font-label-sm text-label-sm px-2 py-0.5 rounded-md font-semibold">{meta.role}</span>
+                          <span className="bg-accent-fill text-accent-strong font-label-sm text-label-sm px-2 py-0.5 rounded-md font-semibold">{center.role ?? ""}</span>
                           <span className="text-on-sky-faint">•</span>
                           <span className="font-label-sm text-label-sm text-on-sky-dim font-mono">{center.lat}° N, {center.lon}° E</span>
                         </div>
                         <h3 className="font-title-lg text-title-lg text-on-sky mt-1">{center.name}</h3>
                         <p className="font-body-md text-body-md text-on-sky-dim flex items-center gap-1 mt-0.5">
                           <span className="material-symbols-outlined text-accent-strong text-[16px]">pin_drop</span>
-                          {center.address}
+                          {center.address ?? ""}
                         </p>
                       </div>
                       <span className="bg-safe-fill text-safe px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
@@ -360,20 +423,20 @@ export default function EvacuationPage() {
                     <div className="h-44 w-full rounded-2xl overflow-hidden relative bg-glass-elevated">
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-label-sm font-label-sm">
-                        <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">{meta.elevation}</span>
-                        <span className="bg-accent-strong text-on-accent px-3 py-1 rounded-full">{meta.sector}</span>
+                        <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">{center.elevation}</span>
+                        <span className="bg-accent-strong text-on-accent px-3 py-1 rounded-full">{center.sector ?? ""}</span>
                       </div>
                     </div>
                     <div className="bg-glass p-4 rounded-2xl flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <span className="font-label-sm text-label-sm text-on-sky-dim uppercase font-semibold">Capacity Threshold</span>
-                        <span className="font-title-sm text-title-sm text-accent-strong font-bold">{meta.capacity} Persons</span>
+                        <span className="font-title-sm text-title-sm text-accent-strong font-bold">{center.capacity} Persons</span>
                       </div>
                       <div className="w-full bg-glass-strong rounded-full h-2 overflow-hidden">
                         <div className="bg-safe h-full rounded-full" style={{ width: "3%" }} />
                       </div>
                       <div className="flex items-center gap-2 flex-wrap pt-1">
-                        {meta.amenities.map((a) => {
+                        {center.amenities.map((a) => {
                           const icon = AMENITY_ICONS[a] ?? "check_circle";
                           const color = AMENITY_COLORS[icon] ?? "text-safe";
                           return (
