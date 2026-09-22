@@ -3,7 +3,38 @@
    ───────────────────────────────────────────── */
 
 .bar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
   padding: 0.75rem 0.75rem 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--sky-top) 72%, transparent) 0%,
+    color-mix(in oklab, var(--sky-top) 45%, transparent) 100%
+  );
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 6px 24px -12px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 200ms cubic-bezier(0.2, 0.7, 0.2, 1), background 250ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Once the page scrolls under the floating bar, deepen the glass and add a
+   soft shadow + inner top highlight so the bar separates from content. */
+.bar[data-scrolled="true"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--sky-top) 90%, transparent) 0%,
+    color-mix(in oklab, var(--sky-top) 80%, transparent) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 12px 28px -10px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
 }
 
 @media (min-width: 768px) {
@@ -22,14 +53,27 @@
   gap: 0.75rem;
 }
 
-/* ── Brand block (always visible, upper left) ── */
+/* ── Brand block (in the bar on desktop only) ── */
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
   min-width: 0;
   flex-shrink: 1;
+}
+
+/* On mobile/tablet the brand lives in its own strip below the bar. */
+@media (max-width: 1023.98px) {
+  .brand {
+    display: none;
+  }
+}
+
+.brandMark {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
 }
 
 .brandIcon {
@@ -70,6 +114,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Mobile / tablet brand strip (below the floating bar, above the page) ──
+   Sits in normal flow so it scrolls away; only the bar stays on top. */
+
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0.125rem;
+}
+
+@media (min-width: 1024px) {
+  .mobileBrand {
+    display: none;
+  }
 }
 
 /* ── Navigation shell ── */

@@ -382,6 +382,7 @@ body {
 
 /* Gradient scrim behind the sticky header so scrolled content blends into the sky */
 .top-scrim {
+  top: var(--topbar-h, 0px);
   background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-top) 30%, color-mix(in oklab, var(--sky-top) 55%, transparent) 75%, transparent 100%);
 }
 
