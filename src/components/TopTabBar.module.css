@@ -22,23 +22,18 @@
   gap: 0.75rem;
 }
 
-/* ── Brand block (desktop only) ── */
+/* ── Brand block (always visible, upper left) ── */
 
 .brand {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 0.625rem;
   min-width: 0;
-  flex-shrink: 0;
-}
-
-@media (min-width: 1024px) {
-  .brand {
-    display: flex;
-  }
+  flex-shrink: 1;
 }
 
 .brandIcon {
+  flex-shrink: 0;
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.75rem;
