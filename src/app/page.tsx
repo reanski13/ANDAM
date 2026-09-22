@@ -128,7 +128,7 @@ export default function Home() {
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky={sky}>
       {/* Sticky chrome — header + iOS tab bar share the same sky */}
-      <div className="top-scrim sticky top-0 z-40">
+      <div className="top-scrim sticky top-0 z-[1050]">
         <DashboardHeader lastUpdated={data?.fetchedAt || null} onRefresh={fetchWeather} loading={loading} />
       
       </div>

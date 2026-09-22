@@ -327,7 +327,7 @@ export default function MapPage() {
 
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
-      <div className="top-scrim sticky top-0 z-40">
+      <div className="top-scrim sticky top-0 z-[1050]">
         <DashboardHeader />
        
       </div>
@@ -395,7 +395,7 @@ export default function MapPage() {
 
         {/* Map Canvas */}
         <Reveal delay={0.05}>
-          <div className="relative w-full h-[680px] lg:h-[720px] rounded-3xl overflow-hidden ring-1 ring-glass-border shadow-[var(--sky-shadow)] select-none">
+          <div className="relative w-full h-[800px] lg:h-[720px] rounded-3xl overflow-hidden ring-1 ring-glass-border shadow-[var(--sky-shadow)] select-none">
           <div ref={mapRef} className="w-full h-full z-0" />
 
           {/* Floating Legend Panel */}
