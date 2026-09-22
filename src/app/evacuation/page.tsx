@@ -3,7 +3,7 @@
 import { useState, useEffect, ViewTransition } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import Reveal from "@/components/motion/Reveal";
-import { EVACUATION_CENTERS, EMERGENCY_CONTACTS } from "@/lib/constants";
+import { EVACUATION_CENTERS, EMERGENCY_CONTACTS, WEBER_HOTEL_DIRECTIONS_URL } from "@/lib/constants";
 import type { MapCenter } from "@/lib/db/reference";
 
 const CENTER_META: Record<string, { role: string; sector: string; verified: boolean; dataSource: string; notes: string }> = {
@@ -33,7 +33,7 @@ const CENTER_META: Record<string, { role: string; sector: string; verified: bool
     sector: "Poblacion",
     verified: true,
     dataSource: "DSWD DROMIC",
-    notes: "Overflow shelter for Tiltilon evacuees (private). Approximate location.",
+    notes: "Overflow shelter for Tiltilon evacuees (private).",
   },
   "Yati Elementary School": {
     role: "Designated EC - School",
@@ -495,7 +495,7 @@ export default function EvacuationPage() {
                         </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <a className="pill-btn pill-btn-primary" href={`https://maps.google.com/?q=${center.lat},${center.lon}`} rel="noopener noreferrer" target="_blank">
+                        <a className="pill-btn pill-btn-primary" href={center.name === "Weber Hotel" ? WEBER_HOTEL_DIRECTIONS_URL : `https://maps.google.com/?q=${center.lat},${center.lon}`} rel="noopener noreferrer" target="_blank">
                           <span className="material-symbols-outlined text-[18px]">near_me</span>
                           <span className="">Get Directions</span>
                         </a>

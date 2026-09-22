@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, ViewTransition } from "react";
 import type { Map as LeafletMap, LayerGroup } from "leaflet";
 import DashboardHeader from "@/components/DashboardHeader";
 import Reveal from "@/components/motion/Reveal";
-import { EVACUATION_CENTERS, COTCOT } from "@/lib/constants";
+import { EVACUATION_CENTERS, COTCOT, WEBER_HOTEL_DIRECTIONS_URL } from "@/lib/constants";
 import type { MapCenter, HazardZone, RiverSensor, FloodIncidentSummary } from "@/lib/db/reference";
+
+const WEBER_HOTEL = EVACUATION_CENTERS.find((c) => c.name === "Weber Hotel");
 
 type MapWithLayers = LeafletMap & {
   _hazardGroup?: LayerGroup;
@@ -96,7 +98,7 @@ const FALLBACK_CENTERS: MapCenter[] = EVACUATION_CENTERS.map((center) => {
       role: "Emergency Overflow Shelter - Private",
       verified: true,
       dataSource: "DSWD DROMIC",
-      notes: "Overflow shelter (private). Approximate location.",
+      notes: "Overflow shelter (private).",
     },
     "Yati Elementary School": {
       sector: "Yati",
@@ -166,6 +168,7 @@ function centerPopup(center: MapCenter): string {
   const statusColor = center.verified ? "#10855a" : "#6b7280";
   const status = center.verified ? "Designated EC — active during Typhoon Tino (Nov 2025)" : "Unconfirmed — reference only";
   const roughly = center.notes?.includes("Approximate") ? `\n      <div style="font-size:11px;color:#b45309;margin-top:2px">Approximate location</div>` : "";
+  const directionsHref = center.name === "Weber Hotel" ? WEBER_HOTEL_DIRECTIONS_URL : `https://maps.google.com/?q=${center.lat},${center.lon}`;
   return `
     <div style="font-family:inherit;padding:4px 0;min-width:180px">
       <div style="font-weight:700;font-size:13px;margin-bottom:2px">${center.name}</div>
@@ -174,7 +177,7 @@ function centerPopup(center: MapCenter): string {
       <div style="font-size:12px;color:#666;margin-top:4px">Capacity: ${center.capacity != null ? `${center.capacity} persons` : "— (not documented)"}</div>
       ${center.role ? `\n      <div style="font-size:11px;color:#666;margin-top:2px">${center.role}</div>` : ""}
       ${center.dataSource ? `\n      <div style="font-size:11px;color:#666;margin-top:2px">Source: ${center.dataSource}</div>` : ""}${roughly}
-      <a href="https://maps.google.com/?q=${center.lat},${center.lon}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#00685d;font-weight:600;text-decoration:none">Get Directions \u2192</a>
+      <a href="${directionsHref}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#00685d;font-weight:600;text-decoration:none">Get Directions \u2192</a>
     </div>`;
 }
 
@@ -273,8 +276,9 @@ export default function MapPage() {
       // Evacuation center markers
       const centerGroup = L.layerGroup();
       resolved.centers.forEach((center) => {
-        const marker = L.circleMarker([center.lat, center.lon], { radius: 10, color: "#ffffff", fillColor: center.verified ? "#10855a" : "#6b7280", fillOpacity: 1, weight: 3 });
-        marker.bindPopup(centerPopup(center));
+        const pin = center.name === "Weber Hotel" && WEBER_HOTEL ? { ...center, lat: WEBER_HOTEL.lat, lon: WEBER_HOTEL.lon } : center;
+        const marker = L.circleMarker([pin.lat, pin.lon], { radius: 10, color: "#ffffff", fillColor: pin.verified ? "#10855a" : "#6b7280", fillOpacity: 1, weight: 3 });
+        marker.bindPopup(centerPopup(pin));
         marker.addTo(centerGroup);
       });
       centerGroup.addTo(map);
