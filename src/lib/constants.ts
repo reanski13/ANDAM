@@ -66,11 +66,13 @@ export const ALERT_LEVELS: Record<AlertLevel, { label: string; color: string; bg
   },
 };
 
+export const WEBER_HOTEL_DIRECTIONS_URL = "https://maps.app.goo.gl/bStDNjaUej5TWi6q8";
+
 export const EVACUATION_CENTERS = [
   { name: "Tiltilon Elementary School", address: "Tiltilon, Barangay Cotcot, Liloan, Cebu", lat: 10.43316, lon: 123.99296 },
   { name: "Liloan Central School", address: "Cebu North Road, Poblacion, Liloan, Cebu", lat: 10.40224, lon: 123.99742 },
   { name: "Panphil B. Francisco Gymnasium", address: "Municipal compound, Poblacion, Liloan, Cebu", lat: 10.3996, lon: 124.0 },
-  { name: "Weber Hotel", address: "Poblacion, Liloan, Cebu", lat: 10.401, lon: 124.0 },
+  { name: "Weber Hotel", address: "Poblacion, Liloan, Cebu", lat: 10.4096078505586, lon: 123.99722509210399 },
   { name: "Yati Elementary School", address: "Cebu North Road, Yati, Liloan, Cebu", lat: 10.39352, lon: 123.98301 },
   { name: "Calero Integrated School", address: "J. Pepito Street, Calero, Liloan, Cebu", lat: 10.36374, lon: 123.99849 },
 ] as const;
