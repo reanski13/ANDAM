@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Map as MapIcon, Siren, BarChart3 } from "lucide-react";
@@ -23,6 +23,26 @@ const NAV_ITEMS = [
 const getActiveKey = (path: string) =>
   path === "/admin" || path.startsWith("/admin/") ? "/admin" : path;
 
+function BrandMark() {
+  return (
+    <div className={styles.brandMark}>
+      <div className={styles.brandIcon}>
+        <Image
+          src="/icon-192.png"
+          alt="ANDAM logo"
+          width={36}
+          height={36}
+          className={styles.brandLogo}
+        />
+      </div>
+      <div className={styles.brandText}>
+        <div className={styles.brandTitle}>ANDAM</div>
+        <div className={styles.brandSub}>Para sa Kaugmaon</div>
+      </div>
+    </div>
+  );
+}
+
 // This component now mounts once, in the root layout, and stays alive across
 // every route change. `pathname` just changes on an already-mounted element,
 // so the pill's CSS transition animates smoothly between two real positions —
@@ -33,6 +53,8 @@ export default function TopTabBar() {
   const containerRef = useRef<HTMLElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const barRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   const activeKey = getActiveKey(pathname);
 
@@ -66,6 +88,29 @@ export default function TopTabBar() {
   }, [measure]);
 
   useIsomorphicLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => {
+      const isScrolled = window.scrollY > 8;
+      setScrolled((prev) => (prev === isScrolled ? prev : isScrolled));
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    const bar = barRef.current;
+    if (!bar || typeof document === "undefined") return;
+    const publish = () => {
+      document.documentElement.style.setProperty("--topbar-h", `${bar.getBoundingClientRect().height}px`);
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const handle = () => measure();
@@ -88,53 +133,47 @@ export default function TopTabBar() {
   }, [measure, activeKey]);
 
   return (
-    <div className={styles.bar}>
-      <div className={styles.inner}>
-        <div className={styles.brand}>
-          <div className={styles.brandIcon}>
-            <Image
-              src="/icon-192.png"
-              alt="ANDAM logo"
-              width={36}
-              height={36}
-              className={styles.brandLogo}
-            />
+    <>
+      <div ref={barRef} className={styles.bar} data-scrolled={scrolled || undefined}>
+        <div className={styles.inner}>
+          <div className={styles.brand}>
+            <BrandMark />
           </div>
-          <div className={styles.brandText}>
-            <div className={styles.brandTitle}>ANDAM</div>
-            <div className={styles.brandSub}>Para sa Kaugmaon</div>
+
+          <nav ref={containerRef} aria-label="Primary" className={styles.nav}>
+            <span ref={pillRef} className={styles.pill} aria-hidden="true" />
+            {NAV_ITEMS.map((item) => {
+              const isActive = activeKey === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  ref={(el) => {
+                    buttonRefs.current[item.key] = el;
+                  }}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`${styles.tab} ${isActive ? styles.active : ""}`}
+                  onClick={() => router.push(item.key)}
+                >
+                  <span className={styles.icon}>{item.icon}</span>
+                  <span className={styles.label}>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className={styles.status}>
+            <span className={styles.statusChip}>
+              <span className={styles.statusDot} />
+              Monitored
+            </span>
           </div>
-        </div>
-
-        <nav ref={containerRef} aria-label="Primary" className={styles.nav}>
-          <span ref={pillRef} className={styles.pill} aria-hidden="true" />
-          {NAV_ITEMS.map((item) => {
-            const isActive = activeKey === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                ref={(el) => {
-                  buttonRefs.current[item.key] = el;
-                }}
-                aria-current={isActive ? "page" : undefined}
-                className={`${styles.tab} ${isActive ? styles.active : ""}`}
-                onClick={() => router.push(item.key)}
-              >
-                <span className={styles.icon}>{item.icon}</span>
-                <span className={styles.label}>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className={styles.status}>
-          <span className={styles.statusChip}>
-            <span className={styles.statusDot} />
-            Monitored
-          </span>
         </div>
       </div>
-    </div>
+
+      <div className={styles.mobileBrand}>
+        <BrandMark />
+      </div>
+    </>
   );
 }
