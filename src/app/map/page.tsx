@@ -400,7 +400,7 @@ export default function MapPage() {
 
           {/* Floating Legend Panel */}
           <div className="absolute top-4 left-4 z-[1000] w-72 max-w-[calc(100%-2rem)] flex flex-col gap-3 pointer-events-none">
-            <div className="pointer-events-auto glass-card-flat p-4">
+            <div className="pointer-events-auto glass-card-float p-4">
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-glass-border">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-watch animate-pulse" />
@@ -432,7 +432,7 @@ export default function MapPage() {
             </div>
 
             {/* Flood Risk Legend */}
-            <div className="pointer-events-auto glass-card-flat p-4">
+            <div className="pointer-events-auto glass-card-float p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Flood Risk Legend</span>
               </div>
