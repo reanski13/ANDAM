@@ -117,7 +117,7 @@ const AMENITY_COLORS: Record<string, string> = {
 };
 
 const CONTACT_ICONS: Record<string, string> = {
-  "Liloan DRRMO": "flood",
+  "Liloan MDRRMO": "flood",
   "Cebu Provincial DRRMO": "domain",
   "Bureau of Fire Protection - Liloan": "local_fire_department",
   "Philippine Red Cross - Cebu": "health_and_safety",
@@ -125,7 +125,7 @@ const CONTACT_ICONS: Record<string, string> = {
 };
 
 const CONTACT_ROLES: Record<string, string> = {
-  "Liloan DRRMO": "Local Rescue Command",
+  "Liloan MDRRMO": "Local Rescue Command",
   "Cebu Provincial DRRMO": "Provincial Headquarters",
   "Bureau of Fire Protection - Liloan": "Fire & Water Rescue",
   "Philippine Red Cross - Cebu": "Medical & Blood Aid",
@@ -133,7 +133,7 @@ const CONTACT_ROLES: Record<string, string> = {
 };
 
 const CONTACT_COLORS: Record<string, string> = {
-  "Liloan DRRMO": "bg-accent-fill text-accent-strong",
+  "Liloan MDRRMO": "bg-accent-fill text-accent-strong",
   "Cebu Provincial DRRMO": "bg-accent-fill text-accent-strong",
   "Bureau of Fire Protection - Liloan": "bg-danger-fill text-danger",
   "Philippine Red Cross - Cebu": "bg-danger-fill text-danger",
@@ -141,7 +141,7 @@ const CONTACT_COLORS: Record<string, string> = {
 };
 
 const CONTACT_HOVER: Record<string, string> = {
-  "Liloan DRRMO": "group-hover:bg-accent group-hover:text-white",
+  "Liloan MDRRMO": "group-hover:bg-accent group-hover:text-white",
   "Cebu Provincial DRRMO": "group-hover:bg-accent group-hover:text-white",
   "Bureau of Fire Protection - Liloan": "group-hover:bg-danger group-hover:text-white",
   "Philippine Red Cross - Cebu": "group-hover:bg-danger group-hover:text-white",
@@ -149,7 +149,7 @@ const CONTACT_HOVER: Record<string, string> = {
 };
 
 const CONTACT_PHONE_COLORS: Record<string, string> = {
-  "Liloan DRRMO": "text-accent-strong",
+  "Liloan MDRRMO": "text-accent-strong",
   "Cebu Provincial DRRMO": "text-accent-strong",
   "Bureau of Fire Protection - Liloan": "text-danger",
   "Philippine Red Cross - Cebu": "text-on-sky",
@@ -384,7 +384,7 @@ export default function EvacuationPage() {
                 </div>
                 <h2 className="font-headline-md text-headline-md text-on-sky font-bold tracking-tight">Need Assisted Evacuation?</h2>
                 <p className="font-body-md text-body-md text-on-sky-dim mt-2">
-                  If water enters your area or you have elderly, PWD, or infants needing rescue transport, contact the Liloan DRRMO immediately.
+                  If water enters your area or you have elderly, PWD, or infants needing rescue transport, contact the Liloan MDRRMO immediately.
                 </p>
               </div>
               <div className="flex flex-col gap-2 mt-6 pt-2 relative">
@@ -394,7 +394,7 @@ export default function EvacuationPage() {
                 </a>
                 <a className="w-full glass-btn" href="tel:09562711967">
                   <span className="material-symbols-outlined text-[18px]">phone_in_talk</span>
-                  <span className="">Liloan DRRMO: 0956 271 1967</span>
+                  <span className="">Liloan MDRRMO: 0956 271 1967</span>
                 </a>
                 <p className="font-label-sm text-label-sm text-on-sky-faint text-center">Verified via Cebu PDRRMO hotline list (GMA News, Oct 2025)</p>
               </div>
@@ -501,7 +501,7 @@ export default function EvacuationPage() {
                         </a>
                         <a className="glass-btn" href="tel:09562711967">
                           <span className="material-symbols-outlined text-[18px] text-accent-strong">call</span>
-                          <span className="">Call Liloan DRRMO</span>
+                          <span className="">Call Liloan MDRRMO</span>
                         </a>
                       </div>
                     </div>
