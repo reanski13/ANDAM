@@ -279,6 +279,26 @@ body {
   border-radius: 1.5rem;
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
+  --glass-card: rgba(255, 255, 255, 0.48);
+  --glass-elevated: rgba(255, 255, 255, 0.74);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.78);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --on-sky: #0d2440;
+  --on-sky-dim: rgba(13, 36, 64, 0.72);
+  --on-sky-faint: rgba(13, 36, 64, 0.55);
+  --st-safe: #0e8a56;
+  --st-safe-fill: rgba(255, 255, 255, 0.55);
+  --st-watch: #a16207;
+  --st-watch-fill: rgba(255, 255, 255, 0.55);
+  --st-warning: #c2410c;
+  --st-warning-fill: rgba(255, 255, 255, 0.55);
+  --st-danger: #b91c1c;
+  --st-danger-fill: rgba(255, 255, 255, 0.55);
+  --accent: #1d4ed8;
+  --accent-strong: #1e3a8a;
+  --accent-fill: rgba(255, 255, 255, 0.55);
+  --accent-inset: inset 0 1px 0 rgba(29, 78, 216, 0.25);
 }
 
 .glass-chip {
