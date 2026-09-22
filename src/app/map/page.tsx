@@ -447,9 +447,9 @@ export default function MapPage() {
           <div ref={mapRef} className="w-full h-full z-0" />
 
           {/* Floating Legend Panel */}
-          <div className="absolute top-4 left-4 z-[1000] w-72 max-w-[calc(100%-2rem)] flex flex-col gap-3 pointer-events-none">
-            <div className="pointer-events-auto glass-card-float p-4">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-glass-border">
+          <div className="absolute top-4 left-4 z-[1000] w-52 sm:w-60 md:w-64 lg:w-72 max-w-[calc(100%-2rem)] flex flex-col gap-2 md:gap-3 pointer-events-none">
+            <div className="pointer-events-auto glass-card-float p-2.5 sm:p-3 lg:p-4">
+              <div className="flex items-center justify-between pb-1.5 mb-1.5 md:pb-2 md:mb-2 border-b border-glass-border">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-watch animate-pulse" />
                   <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Hydrological Gauges</span>
@@ -462,10 +462,10 @@ export default function MapPage() {
                   const flow = sensor.latest?.flowCms;
                   const isAlert = sensor.status === "alert";
                   return (
-                    <div key={sensor.stationId ?? sensor.id} className="flex items-center justify-between p-2 rounded-xl bg-glass">
-                      <div className="flex flex-col">
-                        <span className="font-label-md text-label-md text-on-sky font-semibold tracking-tight">{sensor.name} ({sensor.stationId ?? "—"})</span>
-                        <span className="font-label-sm text-label-sm text-on-sky-dim tracking-tight">Flow rate: {flow != null ? `${flow.toFixed(1)} m\u00b3/s` : "—"}</span>
+                    <div key={sensor.stationId ?? sensor.id} className="flex items-center justify-between p-1.5 md:p-2 rounded-xl bg-glass">
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-label-md text-label-md text-on-sky font-semibold tracking-tight truncate">{sensor.name} ({sensor.stationId ?? "—"})</span>
+                        <span className="hidden sm:block font-label-sm text-label-sm text-on-sky-dim tracking-tight">Flow rate: {flow != null ? `${flow.toFixed(1)} m\u00b3/s` : "—"}</span>
                       </div>
                       <div className="text-right">
                         <span className={`font-title-sm text-title-sm ${isAlert ? "text-warning" : "text-accent-strong"} font-bold tracking-tight`}>{level != null ? `${level.toFixed(2)} m` : "--"}</span>
@@ -480,15 +480,15 @@ export default function MapPage() {
             </div>
 
             {/* Flood Risk Legend */}
-            <div className="pointer-events-auto glass-card-float p-4">
+            <div className="pointer-events-auto glass-card-float p-2.5 sm:p-3 lg:p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Flood Risk Legend</span>
               </div>
               <div className="flex flex-col gap-1.5">
                 {mapData.zones.map((zone) => (
-                  <div key={zone.id} className="flex items-center gap-2">
+                  <div key={zone.id} className="flex items-center gap-2 min-w-0">
                     <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: ZONE_STYLES[zone.severity]?.color ?? "#6b7280", opacity: 0.7 }} />
-                    <span className="font-label-sm text-label-sm text-on-sky-dim">{zone.name}</span>
+                    <span className="font-label-sm text-label-sm text-on-sky-dim truncate lg:overflow-visible lg:whitespace-normal">{zone.name}</span>
                   </div>
                 ))}
               </div>
