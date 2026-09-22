@@ -122,7 +122,7 @@ export default function FloodRiskCard({ level, riskScore, reasons, rainfall1h = 
             {meterStops.map((s) => (
               <div
                 key={s.id}
-                className={`h-full rounded-full transition-all duration-500 ${s.className}`}
+                className={`h-full rounded-full transition-[width,opacity,box-shadow,background-color] duration-500 ${s.className}`}
                 style={{
                   width: `${s.width}%`,
                   opacity: s.active ? 1 : 0.28,

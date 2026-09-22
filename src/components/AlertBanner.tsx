@@ -120,7 +120,7 @@ export default function AlertBanner({ level, title, message, timestamp, dismissi
           {dismissible && (
             <button
               onClick={() => setDismissed(true)}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-glass hover:bg-glass-elevated text-on-sky-dim transition-all active:scale-95"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-glass hover:bg-glass-elevated text-on-sky-dim transition active:scale-95"
               aria-label="Dismiss Advisory"
             >
               <X className="w-4 h-4" />

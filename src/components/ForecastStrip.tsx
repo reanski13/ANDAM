@@ -44,7 +44,7 @@ export default function ForecastStrip({ forecast }: ForecastStripProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.06, ease: EASE }}
-              className={`flex flex-col items-center gap-2 px-4 py-3 rounded-2xl min-w-[86px] transition-all ${
+              className={`flex flex-col items-center gap-2 px-4 py-3 rounded-2xl min-w-[86px] transition ${
                 isNow ? "bg-glass-elevated border border-glass-border" : "hover:bg-glass-elevated/60 active:scale-95"
               }`}
             >
@@ -55,7 +55,7 @@ export default function ForecastStrip({ forecast }: ForecastStripProps) {
               <span className="font-title-sm text-title-sm font-bold text-on-sky tabular-nums">{day.tempHigh}°</span>
               <div className="w-1.5 h-12 rounded-full bg-glass overflow-hidden flex items-end justify-center">
                 <div
-                  className={`w-full rounded-full transition-all ${isNow ? "bg-accent" : "bg-on-sky-faint"}`}
+                  className={`w-full rounded-full transition-[height,background-color] ${isNow ? "bg-accent" : "bg-on-sky-faint"}`}
                   style={{ height: getRainBarHeight(day.rainProbability) }}
                 />
               </div>

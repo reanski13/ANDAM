@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import MotionProvider from "@/components/motion/MotionProvider";
+import TopTabBar from "@/components/TopTabBar";
 import "./globals.css";
 
 const geist = Geist({
@@ -61,7 +62,18 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full text-on-sky">
-        <MotionProvider>{children}</MotionProvider>
+        <MotionProvider>
+          {/*
+            TopTabBar lives here, as a sibling of `children`, not inside any
+            page. This way it mounts exactly once for the whole app session —
+            navigating between routes only changes `pathname` inside it, it
+            never unmounts/remounts, so the CSS transition on the pill can
+            actually animate between two live positions instead of replaying
+            an entry animation on every route change.
+          */}
+          <TopTabBar />
+          {children}
+        </MotionProvider>
       </body>
     </html>
   );

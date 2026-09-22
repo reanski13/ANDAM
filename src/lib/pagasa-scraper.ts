@@ -27,6 +27,7 @@ export async function scrapePagasaVisayas(): Promise<PagasaWeatherData> {
       headers: {
         "User-Agent": "CotcotFloodAlert/1.0 (Community Weather Monitoring)",
       },
+      signal: AbortSignal.timeout(4000),
     });
 
     if (!response.ok) {

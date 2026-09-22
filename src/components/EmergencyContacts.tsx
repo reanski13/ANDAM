@@ -45,7 +45,7 @@ export default function EmergencyContacts() {
               <a
                 key={contact.name}
                 href={`tel:${contact.number.replace(/[^0-9]/g, "")}`}
-                className="p-3 rounded-2xl bg-glass hover:bg-glass-elevated transition-all flex items-center gap-3 group active:scale-[0.98]"
+                className="p-3 rounded-2xl bg-glass hover:bg-glass-elevated transition flex items-center gap-3 group active:scale-[0.98]"
               >
                 <div className={`w-10 h-10 rounded-xl ${meta.iconBg} ${meta.iconColor} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
                   <span className="material-symbols-outlined text-[20px]">{meta.icon}</span>
@@ -64,7 +64,7 @@ export default function EmergencyContacts() {
         {ndrrmc && (
           <a
             href={`tel:${ndrrmc.number.replace(/[^0-9]/g, "")}`}
-            className="mt-2 p-3 rounded-2xl bg-danger-fill hover:bg-danger-fill/80 transition-all flex items-center justify-between group active:scale-[0.99]"
+            className="mt-2 p-3 rounded-2xl bg-danger-fill hover:bg-danger-fill/80 transition flex items-center justify-between group active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-danger text-white flex items-center justify-center font-bold font-title-sm">911</span>
@@ -82,7 +82,7 @@ export default function EmergencyContacts() {
       <div className="pt-3 border-t border-glass-border flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-safe opacity-75" />
+            <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-safe opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-safe" />
           </span>
           <span className="font-label-sm text-label-sm text-on-sky-faint">Radio VHF Ch 142.500 MHz Standing By</span>

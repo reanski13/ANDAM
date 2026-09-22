@@ -63,7 +63,7 @@ export default function DashboardHeader({ lastUpdated, onRefresh, loading = fals
         : null;
 
   const iconBtn =
-    "w-9 h-9 rounded-full flex items-center justify-center bg-glass border border-glass-border text-on-sky-dim hover:text-on-sky hover:bg-glass-elevated transition-all active:scale-95";
+    "w-9 h-9 rounded-full flex items-center justify-center bg-glass border border-glass-border text-on-sky-dim hover:text-on-sky hover:bg-glass-elevated transition active:scale-95";
 
   return (
     <header className="px-3 md:px-6 pt-3 md:pt-4">

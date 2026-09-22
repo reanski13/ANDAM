@@ -34,7 +34,7 @@ export async function getCurrentWeather(): Promise<OpenWeatherCurrent> {
   if (!API_KEY) throw new Error("OPENWEATHER_API_KEY not set");
 
   const url = `${BASE_URL}/weather?lat=${COTCOT.lat}&lon=${COTCOT.lon}&appid=${API_KEY}&units=metric`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(4000) });
 
   if (!response.ok) {
     throw new Error(`OpenWeatherMap fetch failed: ${response.status}`);

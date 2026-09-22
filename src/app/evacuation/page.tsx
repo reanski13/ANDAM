@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import TopTabBar from "@/components/TopTabBar";
+import { useState, ViewTransition } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import Reveal from "@/components/motion/Reveal";
 import { EVACUATION_CENTERS, EMERGENCY_CONTACTS } from "@/lib/constants";
@@ -215,17 +214,29 @@ export default function EvacuationPage() {
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
       <div className="top-scrim sticky top-0 z-40">
         <DashboardHeader />
-        <TopTabBar />
       </div>
 
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+        <ViewTransition
+          enter={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          exit={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          default="none"
+        >
         {/* Status & Quick Navigation Ribbon */}
         <Reveal>
         <section className="flex flex-col gap-4">
           <div className="glass-card-flat p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="flex h-3 w-3 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-safe opacity-75" />
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-safe opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-safe" />
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-3">
@@ -415,7 +426,7 @@ export default function EvacuationPage() {
                 <a
                   key={contact.name}
                   href={`tel:${contact.number.replace(/[^0-9]/g, "")}`}
-                  className={`${isNDRRMC ? "bg-warning-fill ring-1 ring-warning/40" : "glass-card"} p-4 rounded-3xl flex flex-col justify-between transition-all group`}
+                  className={`${isNDRRMC ? "bg-warning-fill ring-1 ring-warning/40" : "glass-card"} p-4 rounded-3xl flex flex-col justify-between transition group`}
                 >
                   <div>
                     <div className={`w-10 h-10 rounded-2xl ${colors} ${hover} flex items-center justify-center mb-3 transition-colors`}>
@@ -452,7 +463,7 @@ export default function EvacuationPage() {
             {SAFETY_GUIDE.map((guide) => {
               const isOpen = openAccordions.has(guide.id);
               return (
-                <div key={guide.id} className="glass-card rounded-3xl overflow-hidden transition-all duration-300">
+                <div key={guide.id} className="glass-card rounded-3xl overflow-hidden transition duration-300">
                   <button
                     className="w-full p-6 flex items-center justify-between text-left hover:bg-glass-elevated/40 transition-colors cursor-pointer"
                     onClick={() => toggleAccordion(guide.id)}
@@ -498,6 +509,7 @@ export default function EvacuationPage() {
           </div>
         </section>
         </Reveal>
+        </ViewTransition>
       </main>
     </div>
   );

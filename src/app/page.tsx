@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ViewTransition } from "react";
 import { AnimatePresence } from "motion/react";
-import TopTabBar from "@/components/TopTabBar";
 import DashboardHeader from "@/components/DashboardHeader";
 import FloodRiskCard from "@/components/FloodRiskCard";
 import WeatherHeroCard from "@/components/WeatherHeroCard";
 import ConditionCard from "@/components/ConditionCard";
 import ForecastStrip from "@/components/ForecastStrip";
+import RainfallTrend from "@/components/RainfallTrend";
 import AlertBanner from "@/components/AlertBanner";
 import PagasaInfo from "@/components/PagasaInfo";
 import EmergencyContacts from "@/components/EmergencyContacts";
@@ -17,6 +17,9 @@ import StaggerItem from "@/components/motion/StaggerItem";
 import { Droplets, Wind, Gauge } from "lucide-react";
 import { skyFor } from "@/lib/sky";
 import type { AlertLevel } from "@/lib/constants";
+
+const WEATHER_CACHE_KEY = "cotcot-weather-cache";
+const WEATHER_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
 interface WeatherData {
   location: { name: string; municipality: string; province: string };
@@ -53,6 +56,8 @@ interface WeatherData {
     riskScore: number;
     reasons: string[];
   };
+  cumulativeRainMm: { h6: number; h12: number; h24: number };
+  hourlySamples: number;
   fetchedAt: string;
   errors: string[];
 }
@@ -67,9 +72,14 @@ export default function Home() {
       setLoading(true);
       const res = await fetch("/api/weather");
       if (!res.ok) throw new Error("Failed to fetch");
-      const json = await res.json();
-      setData(json);
+      const json = (await res.json()) as { data: WeatherData };
+      setData(json.data);
       setError(null);
+      try {
+        localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(json.data));
+      } catch {
+        /* ignore */
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -78,7 +88,23 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const init = async () => { await fetchWeather(); };
+    const init = async () => {
+      try {
+        const cached = localStorage.getItem(WEATHER_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached) as WeatherData;
+          if (
+            parsed?.fetchedAt &&
+            Date.now() - new Date(parsed.fetchedAt).getTime() < WEATHER_CACHE_MAX_AGE_MS
+          ) {
+            setData(parsed);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+      await fetchWeather();
+    };
     init();
     const interval = setInterval(fetchWeather, 10 * 60 * 1000);
     return () => clearInterval(interval);
@@ -93,10 +119,23 @@ export default function Home() {
       {/* Sticky chrome — header + iOS tab bar share the same sky */}
       <div className="top-scrim sticky top-0 z-40">
         <DashboardHeader lastUpdated={data?.fetchedAt || null} onRefresh={fetchWeather} loading={loading} />
-        <TopTabBar />
+      
       </div>
 
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+        <ViewTransition
+          enter={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          exit={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          default="none"
+        >
         {/* Loading state */}
         {loading && !data && (
           <div className="flex items-center justify-center py-24">
@@ -229,6 +268,14 @@ export default function Home() {
               </Stagger>
             )}
 
+            {/* Rainfall trend */}
+            <Reveal>
+              <RainfallTrend
+                cumulativeRainMm={data.cumulativeRainMm ?? { h6: 0, h12: 0, h24: 0 }}
+                hourlySamples={data.hourlySamples ?? 0}
+              />
+            </Reveal>
+
             {/* 24-hour forecast */}
             <Reveal>
               <ForecastStrip
@@ -268,6 +315,7 @@ export default function Home() {
             </Reveal>
           </>
         )}
+        </ViewTransition>
       </main>
     </div>
   );

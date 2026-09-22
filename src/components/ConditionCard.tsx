@@ -89,7 +89,7 @@ export default function ConditionCard({
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
               animate={{ strokeDashoffset: offset }}
-              transition={{ duration: 1, ease: EASE }}
+              transition={{ duration: 0.8, ease: EASE }}
               strokeLinecap="round"
             />
           </svg>

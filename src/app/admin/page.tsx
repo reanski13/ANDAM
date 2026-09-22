@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ViewTransition } from "react";
 import TopTabBar from "@/components/TopTabBar";
 import LogoutButton from "@/components/LogoutButton";
 import Reveal from "@/components/motion/Reveal";
@@ -28,6 +29,19 @@ export default async function AdminPage() {
       </div>
 
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+        <ViewTransition
+          enter={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          exit={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          default="none"
+        >
         {/* Top Command Action Bar */}
         <Reveal>
         <section className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 glass-card p-6">
@@ -52,15 +66,15 @@ export default async function AdminPage() {
               {displayName} · {roleText}
             </span>
             <LogoutButton />
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-glass text-on-sky hover:bg-glass-elevated font-title-sm transition-all duration-200 active:scale-95">
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-glass text-on-sky hover:bg-glass-elevated font-title-sm transition duration-200 active:scale-95">
               <span className="material-symbols-outlined text-[18px] text-accent-strong">picture_as_pdf</span>
               Export SitRep (PDF)
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-glass text-on-sky hover:bg-glass-elevated font-title-sm transition-all duration-200 active:scale-95">
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-glass text-on-sky hover:bg-glass-elevated font-title-sm transition duration-200 active:scale-95">
               <span className="material-symbols-outlined text-[18px] text-accent-strong">add_notes</span>
               New Incident Log
             </button>
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent-fill text-accent-strong hover:brightness-105 active:scale-95 font-title-sm font-semibold transition-all duration-200">
+            <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent-fill text-accent-strong hover:brightness-105 active:scale-95 font-title-sm font-semibold transition duration-200">
               <span className="material-symbols-outlined text-[20px]">cell_tower</span>
               Broadcast Public SMS Alert
             </button>
@@ -276,7 +290,7 @@ export default async function AdminPage() {
               <div className="mt-4 bg-watch-fill rounded-2xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-watch opacity-75" />
+                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-watch opacity-75" />
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-watch" />
                   </div>
                   <div className="flex flex-col">
@@ -410,6 +424,7 @@ export default async function AdminPage() {
           </div>
         </section>
         </Reveal>
+        </ViewTransition>
       </main>
     </div>
   );

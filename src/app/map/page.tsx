@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ViewTransition } from "react";
 import type { Map as LeafletMap, LayerGroup } from "leaflet";
-import TopTabBar from "@/components/TopTabBar";
 import DashboardHeader from "@/components/DashboardHeader";
 import Reveal from "@/components/motion/Reveal";
 import { EVACUATION_CENTERS, COTCOT } from "@/lib/constants";
@@ -147,10 +146,23 @@ export default function MapPage() {
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
       <div className="top-scrim sticky top-0 z-40">
         <DashboardHeader />
-        <TopTabBar />
+       
       </div>
 
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+        <ViewTransition
+          enter={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          exit={{
+            "nav-forward": "nav-forward",
+            "nav-back": "nav-back",
+            default: "none",
+          }}
+          default="none"
+        >
         {/* Header & Action Bar */}
         <Reveal>
           <div className="flex flex-col gap-4 mb-2">
@@ -181,7 +193,7 @@ export default function MapPage() {
                     <button
                       key={key}
                       onClick={() => toggleLayer(key)}
-                      className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-md font-label-md transition-all ${
+                      className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-md font-label-md transition ${
                         layers[key]
                           ? "bg-accent-fill text-accent-strong shadow-sm"
                           : "bg-glass text-on-sky-dim"
@@ -208,7 +220,7 @@ export default function MapPage() {
             <div className="pointer-events-auto glass-card-flat p-4">
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-glass-border">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-watch animate-ping" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-watch animate-pulse" />
                   <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Hydrological Gauges</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm font-semibold tracking-tight">2 Active</span>
@@ -307,6 +319,7 @@ export default function MapPage() {
           </div>
         </div>
         </Reveal>
+        </ViewTransition>
       </main>
     </div>
   );
