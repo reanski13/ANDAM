@@ -15,10 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cotcot Flood Alert - Liloan, Cebu",
+  title: "ANDAM - Liloan, Cebu",
   description:
     "Real-time flood monitoring and early warning system for Barangay Cotcot, Liloan, Cebu, Philippines",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport = {

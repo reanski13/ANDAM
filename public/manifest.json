@@ -1,6 +1,6 @@
 {
-  "name": "Cotcot Flood Alert",
-  "short_name": "CotFlood",
+  "name": "ANDAM",
+  "short_name": "ANDAM",
   "description": "Flood monitoring and early warning for Barangay Cotcot, Liloan, Cebu",
   "start_url": "/",
   "display": "standalone",

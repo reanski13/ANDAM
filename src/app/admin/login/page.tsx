@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Droplets, Lock, Eye, EyeOff, Loader2, Mail, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Lock, Eye, EyeOff, Loader2, Mail, ShieldCheck, ArrowLeft } from "lucide-react";
 import { createBrowserClient, isSupabaseConfigured } from "@/lib/supabase/browser";
 
 const REQUEST_ACCESS_EMAIL = "drrmo@liloan.gov.ph";
@@ -70,7 +71,7 @@ export default function AdminLoginPage() {
 
     const subject = `Officials Access Request - ${name.trim()}`;
     const body = [
-      "Please grant me access to the Cotcot Flood Alert Officials Dashboard.",
+      "Please grant me access to the ANDAM Officials Dashboard.",
       "",
       `Name: ${name.trim()}`,
       `Position / Role: ${role.trim()}`,
@@ -78,7 +79,7 @@ export default function AdminLoginPage() {
       `Contact email: ${contactEmail.trim()}`,
       `Reason: ${reason.trim()}`,
       "",
-      "Submitted via the Cotcot Flood Alert web application.",
+      "Submitted via the ANDAM web application.",
     ].join("\n");
 
     window.location.href = `mailto:${REQUEST_ACCESS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -99,12 +100,18 @@ export default function AdminLoginPage() {
         <div className="glass-card p-8 rounded-3xl animate-fade-in">
           {/* Brand */}
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-11 h-11 rounded-2xl bg-glass text-accent-strong shadow-sm flex items-center justify-center">
-              <Droplets className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-2xl bg-glass shadow-sm flex items-center justify-center overflow-hidden">
+              <Image
+                src="/icon-192.png"
+                alt="ANDAM logo"
+                width={44}
+                height={44}
+                className="w-full h-full object-contain p-1.5"
+              />
             </div>
             <div className="leading-tight">
-              <div className="text-on-sky font-semibold">Cotcot Flood Alert</div>
-              <div className="text-on-sky-faint text-xs font-medium">Brgy. Cotcot, Liloan, Cebu</div>
+              <div className="text-on-sky font-semibold">ANDAM</div>
+              <div className="text-on-sky-faint text-xs font-medium">Para sa Kaugmaon</div>
             </div>
           </div>
 

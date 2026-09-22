@@ -8,7 +8,7 @@ import { getCurrentUser, isOfficial } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Officials Dashboard - Cotcot Flood Alert",
+  title: "Officials Dashboard - ANDAM",
   description: "Tools for barangay officials to monitor weather patterns and coordinate emergency response",
 };
 

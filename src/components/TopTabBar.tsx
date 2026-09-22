@@ -1,14 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  LayoutDashboard,
-  Map as MapIcon,
-  Siren,
-  BarChart3,
-  Droplets,
-} from "lucide-react";
+import { LayoutDashboard, Map as MapIcon, Siren, BarChart3 } from "lucide-react";
 import styles from "./TopTabBar.module.css";
 
 const useIsomorphicLayoutEffect =
@@ -21,6 +16,13 @@ const NAV_ITEMS = [
   { key: "/admin", label: "Officials", icon: <BarChart3 /> },
 ];
 
+// The Officials route guards itself: a non-official visiting /admin is
+// redirected to /admin/login (a child path with no tab of its own). Resolve
+// every /admin* path to the /admin tab so the pill and active state follow
+// the whole Officials flow instead of freezing on the previous tab.
+const getActiveKey = (path: string) =>
+  path === "/admin" || path.startsWith("/admin/") ? "/admin" : path;
+
 // This component now mounts once, in the root layout, and stays alive across
 // every route change. `pathname` just changes on an already-mounted element,
 // so the pill's CSS transition animates smoothly between two real positions —
@@ -32,10 +34,12 @@ export default function TopTabBar() {
   const pillRef = useRef<HTMLSpanElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
+  const activeKey = getActiveKey(pathname);
+
   const measure = useCallback(() => {
     const container = containerRef.current;
     const pill = pillRef.current;
-    const active = buttonRefs.current[pathname];
+    const active = buttonRefs.current[activeKey];
     if (!container || !pill || !active) return;
     const containerRect = container.getBoundingClientRect();
     const activeRect = active.getBoundingClientRect();
@@ -43,7 +47,7 @@ export default function TopTabBar() {
     const w = activeRect.width;
     pill.style.setProperty("--pill-to-x", `${x}px`);
     pill.style.setProperty("--pill-to-w", `${w}px`);
-  }, [pathname]);
+  }, [activeKey]);
 
   // Runs once on the real mount (app start), and again whenever pathname
   // changes on the still-mounted component. `data-ready` gates the CSS
@@ -68,7 +72,7 @@ export default function TopTabBar() {
     window.addEventListener("resize", handle);
     const observer = new ResizeObserver(handle);
     observer.observe(container);
-    const active = buttonRefs.current[pathname];
+    const active = buttonRefs.current[activeKey];
     if (active) observer.observe(active);
     let cancelled = false;
     if (typeof document !== "undefined" && "fonts" in document) {
@@ -81,25 +85,31 @@ export default function TopTabBar() {
       window.removeEventListener("resize", handle);
       observer.disconnect();
     };
-  }, [measure, pathname]);
+  }, [measure, activeKey]);
 
   return (
     <div className={styles.bar}>
       <div className={styles.inner}>
         <div className={styles.brand}>
           <div className={styles.brandIcon}>
-            <Droplets />
+            <Image
+              src="/icon-192.png"
+              alt="ANDAM logo"
+              width={36}
+              height={36}
+              className={styles.brandLogo}
+            />
           </div>
           <div className={styles.brandText}>
-            <div className={styles.brandTitle}>Cotcot Flood Alert</div>
-            <div className={styles.brandSub}>Brgy. Cotcot, Liloan</div>
+            <div className={styles.brandTitle}>ANDAM</div>
+            <div className={styles.brandSub}>Para sa Kaugmaon</div>
           </div>
         </div>
 
         <nav ref={containerRef} aria-label="Primary" className={styles.nav}>
           <span ref={pillRef} className={styles.pill} aria-hidden="true" />
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.key;
+            const isActive = activeKey === item.key;
             return (
               <button
                 key={item.key}
