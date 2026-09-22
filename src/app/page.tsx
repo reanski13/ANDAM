@@ -51,6 +51,17 @@ interface WeatherData {
       coastalWater: string;
     }>;
   } | null;
+  forecast: Array<{
+    timestamp: number;
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    pop: number;
+    rainMm: number;
+    condition: string;
+    description: string;
+    icon: string;
+  }> | null;
   risk: {
     level: AlertLevel;
     riskScore: number;
@@ -278,15 +289,7 @@ export default function Home() {
 
             {/* 24-hour forecast */}
             <Reveal>
-              <ForecastStrip
-                forecast={[
-                  { day: "Today", icon: "01d", tempHigh: 28, tempLow: 22, rainProbability: 5, condition: current?.condition || "Clear" },
-                  { day: "Tomorrow", icon: "10d", tempHigh: 26, tempLow: 21, rainProbability: 35, condition: "Rain" },
-                  { day: "Wednesday", icon: "10d", tempHigh: 24, tempLow: 20, rainProbability: 80, condition: "Rain" },
-                  { day: "Thursday", icon: "02d", tempHigh: 27, tempLow: 22, rainProbability: 20, condition: "Clouds" },
-                  { day: "Friday", icon: "01d", tempHigh: 29, tempLow: 23, rainProbability: 5, condition: "Clear" },
-                ]}
-              />
+              <ForecastStrip forecast={data.forecast || []} />
             </Reveal>
 
             {/* Bottom row */}

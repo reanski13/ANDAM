@@ -24,10 +24,12 @@ export interface OpenWeatherForecast {
   temperature: number;
   humidity: number;
   rain3h: number;
+  pop: number;
   windSpeed: number;
   windDeg: number;
   condition: string;
   description: string;
+  icon: string;
 }
 
 export async function getCurrentWeather(): Promise<OpenWeatherCurrent> {
@@ -65,7 +67,7 @@ export async function getHourlyForecast(
   if (!API_KEY) throw new Error("OPENWEATHER_API_KEY not set");
 
   const url = `${BASE_URL}/forecast?lat=${COTCOT.lat}&lon=${COTCOT.lon}&appid=${API_KEY}&units=metric&cnt=${Math.min(hours / 3, 40)}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(4000) });
 
   if (!response.ok) {
     throw new Error(`OpenWeatherMap forecast failed: ${response.status}`);
@@ -73,15 +75,26 @@ export async function getHourlyForecast(
 
   const data = await response.json();
 
-  return data.list.map((item: Record<string, unknown>) => ({
-    timestamp: item.dt as number,
-    temperature: (item.main as Record<string, number>).temp,
-    humidity: (item.main as Record<string, number>).humidity,
-    rain3h: (item.rain as Record<string, number>)?.["3h"] || 0,
-    windSpeed: (item.wind as Record<string, number>).speed * 3.6,
-    windDeg: (item.wind as Record<string, number>).deg,
-    condition: (item.weather as Array<Record<string, string>>)[0]?.main || "Unknown",
-    description: (item.weather as Array<Record<string, string>>)[0]?.description || "Unknown",
+  const weatherList = data.list as Array<{
+    dt?: number;
+    main?: { temp?: number; humidity?: number };
+    pop?: number;
+    rain?: { "3h"?: number };
+    wind?: { speed?: number; deg?: number };
+    weather?: Array<{ main?: string; description?: string; icon?: string }>;
+  }>;
+
+  return weatherList.map((item) => ({
+    timestamp: item.dt ?? 0,
+    temperature: item.main?.temp ?? 0,
+    humidity: item.main?.humidity ?? 0,
+    rain3h: item.rain?.["3h"] ?? 0,
+    pop: item.pop ?? 0,
+    windSpeed: (item.wind?.speed ?? 0) * 3.6,
+    windDeg: item.wind?.deg ?? 0,
+    condition: item.weather?.[0]?.main ?? "Unknown",
+    description: item.weather?.[0]?.description ?? "Unknown",
+    icon: item.weather?.[0]?.icon ?? "01d",
   }));
 }
 

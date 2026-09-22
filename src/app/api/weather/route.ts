@@ -1,4 +1,4 @@
-import { getCurrentWeather } from "@/lib/openweather";
+import { getCurrentWeather, getHourlyForecast } from "@/lib/openweather";
 import { scrapePagasaVisayas } from "@/lib/pagasa-scraper";
 import { calculateFloodRisk } from "@/lib/alerts";
 import { COTCOT } from "@/lib/constants";
@@ -30,17 +30,22 @@ export async function GET() {
     const results = await Promise.allSettled([
       getCurrentWeather(),
       scrapePagasaVisayas(),
+      getHourlyForecast(24),
     ]);
     const errors: string[] = [];
 
     const openWeather = results[0].status === "fulfilled" ? results[0].value : null;
     const pagasa = results[1].status === "fulfilled" ? results[1].value : null;
+    const forecast = results[2].status === "fulfilled" ? results[2].value : null;
 
     if (results[0].status === "rejected") {
       errors.push(`OpenWeatherMap: ${messageOf(results[0].reason)}`);
     }
     if (results[1].status === "rejected") {
       errors.push(`PAGASA: ${messageOf(results[1].reason)}`);
+    }
+    if (results[2].status === "rejected") {
+      errors.push(`Forecast: ${messageOf(results[2].reason)}`);
     }
 
     const rainfall1h = openWeather?.rain1h || 0;
@@ -100,6 +105,19 @@ export async function GET() {
             forecast: pagasa.forecast,
             windConditions: pagasa.windConditions,
           }
+        : null,
+      forecast: forecast
+        ? forecast.map((item) => ({
+            timestamp: item.timestamp,
+            temperature: item.temperature,
+            humidity: item.humidity,
+            windSpeed: item.windSpeed,
+            pop: item.pop,
+            rainMm: item.rain3h,
+            condition: item.condition,
+            description: item.description,
+            icon: item.icon,
+          }))
         : null,
       risk: {
         level: risk.level,
