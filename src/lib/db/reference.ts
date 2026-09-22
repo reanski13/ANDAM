@@ -19,6 +19,9 @@ export interface MapCenter {
   imageQuery: string | null;
   amenities: string[];
   contact: string | null;
+  verified: boolean;
+  dataSource: string | null;
+  notes: string | null;
 }
 
 export interface HazardZone {
@@ -93,6 +96,9 @@ export async function getEvacuationCenters(): Promise<MapCenter[]> {
     imageQuery: row.image_query,
     amenities: row.amenities ?? [],
     contact: row.contact,
+    verified: row.verified,
+    dataSource: row.data_source,
+    notes: row.notes,
   }));
 }
 

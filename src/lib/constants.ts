@@ -3,8 +3,8 @@ export const COTCOT = {
   municipality: "Liloan",
   province: "Cebu",
   region: "Central Visayas",
-  lat: 10.3000,
-  lon: 123.9833,
+  lat: 10.4276,
+  lon: 124.0017,
 } as const;
 
 export const PAGASA_REGIONS = {
@@ -67,10 +67,13 @@ export const ALERT_LEVELS: Record<AlertLevel, { label: string; color: string; bg
 };
 
 export const EVACUATION_CENTERS = [
-  { name: "Cotcot Barangay Hall", address: "Barangay Cotcot, Liloan, Cebu", lat: 10.3010, lon: 123.9840 },
-  { name: "Cotcot Elementary School", address: "Purok Masagana, Cotcot, Liloan", lat: 10.2990, lon: 123.9820 },
-  { name: "Liloan Municipal Gymnasium", address: "Poblacion, Liloan, Cebu", lat: 10.3167, lon: 123.9667 },
-  { name: "Sacred Heart School - Cotcot", address: "Cotcot, Liloan, Cebu", lat: 10.3005, lon: 123.9835 },
+  { name: "Tiltilon Elementary School", address: "Tiltilon, Barangay Cotcot, Liloan, Cebu", lat: 10.43316, lon: 123.99296 },
+  { name: "Liloan Central School", address: "Cebu North Road, Poblacion, Liloan, Cebu", lat: 10.40224, lon: 123.99742 },
+  { name: "Panphil B. Francisco Gymnasium", address: "Municipal compound, Poblacion, Liloan, Cebu", lat: 10.3996, lon: 124.0 },
+  { name: "Weber Hotel", address: "Poblacion, Liloan, Cebu", lat: 10.401, lon: 124.0 },
+  { name: "Yati Elementary School", address: "Cebu North Road, Yati, Liloan, Cebu", lat: 10.39352, lon: 123.98301 },
+  { name: "Calero Integrated School", address: "J. Pepito Street, Calero, Liloan, Cebu", lat: 10.36374, lon: 123.99849 },
+  { name: "Cotcot Barangay Hall", address: "Barangay Cotcot, Liloan, Cebu", lat: 10.4276, lon: 124.0017 },
 ] as const;
 
 export const EMERGENCY_CONTACTS = [

@@ -118,6 +118,7 @@ export type Database = {
           capacity: number | null
           contact: string | null
           created_at: string
+          data_source: string | null
           elevation_label: string | null
           elevation_m: number | null
           id: string
@@ -126,9 +127,11 @@ export type Database = {
           lat: number
           lon: number
           name: string
+          notes: string | null
           purok: string | null
           role: string | null
           sector: string | null
+          verified: boolean
         }
         Insert: {
           address?: string | null
@@ -136,6 +139,7 @@ export type Database = {
           capacity?: number | null
           contact?: string | null
           created_at?: string
+          data_source?: string | null
           elevation_label?: string | null
           elevation_m?: number | null
           id?: string
@@ -144,9 +148,11 @@ export type Database = {
           lat: number
           lon: number
           name: string
+          notes?: string | null
           purok?: string | null
           role?: string | null
           sector?: string | null
+          verified?: boolean
         }
         Update: {
           address?: string | null
@@ -154,6 +160,7 @@ export type Database = {
           capacity?: number | null
           contact?: string | null
           created_at?: string
+          data_source?: string | null
           elevation_label?: string | null
           elevation_m?: number | null
           id?: string
@@ -162,9 +169,11 @@ export type Database = {
           lat?: number
           lon?: number
           name?: string
+          notes?: string | null
           purok?: string | null
           role?: string | null
           sector?: string | null
+          verified?: boolean
         }
         Relationships: []
       }

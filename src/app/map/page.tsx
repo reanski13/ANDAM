@@ -41,8 +41,8 @@ const FALLBACK_SENSORS: RiverSensor[] = [
     stationId: "Stn-01",
     name: "Cotcot Bridge",
     purok: null,
-    lat: 10.3015,
-    lon: 123.9818,
+    lat: 10.426,
+    lon: 124.001,
     normalLevelM: 2.5,
     warningLevelM: null,
     dangerLevelM: null,
@@ -56,8 +56,8 @@ const FALLBACK_SENSORS: RiverSensor[] = [
     stationId: "Stn-02",
     name: "Masagana Creek",
     purok: null,
-    lat: 10.2988,
-    lon: 123.9845,
+    lat: 10.429,
+    lon: 124.0035,
     normalLevelM: 1.6,
     warningLevelM: null,
     dangerLevelM: null,
@@ -69,36 +69,83 @@ const FALLBACK_SENSORS: RiverSensor[] = [
 ];
 
 const FALLBACK_CENTERS: MapCenter[] = EVACUATION_CENTERS.map((center) => {
-  const meta: Record<string, { capacity?: number; sector?: string }> = {
-    "Cotcot Barangay Hall": { capacity: 350, sector: "Sector A" },
-    "Cotcot Elementary School": { capacity: 600, sector: "Sector B" },
-    "Liloan Municipal Gymnasium": { capacity: 800, sector: "Municipal Hub" },
-    "Sacred Heart School - Cotcot": { capacity: 400, sector: "Sector C" },
+  const meta: Record<string, { sector?: string; role?: string; verified?: boolean; dataSource?: string; notes?: string }> = {
+    "Tiltilon Elementary School": {
+      sector: "Cotcot",
+      role: "Designated EC - School",
+      verified: true,
+      dataSource: "PNA / DSWD DROMIC",
+      notes: "Housed 509 IDPs during Typhoon Tino (Nov 2025).",
+    },
+    "Liloan Central School": {
+      sector: "Poblacion",
+      role: "Designated EC - School",
+      verified: true,
+      dataSource: "CDN Digital / DSWD DROMIC",
+      notes: "137 Cotcot River residents relocated here, 24 Nov 2025.",
+    },
+    "Panphil B. Francisco Gymnasium": {
+      sector: "Poblacion",
+      role: "Designated EC - Gymnasium / Relief Hub",
+      verified: true,
+      dataSource: "DSWD DROMIC",
+      notes: "618 IDPs sheltered during Tino. Approximate location.",
+    },
+    "Weber Hotel": {
+      sector: "Poblacion",
+      role: "Emergency Overflow Shelter - Private",
+      verified: true,
+      dataSource: "DSWD DROMIC",
+      notes: "Overflow shelter (private). Approximate location.",
+    },
+    "Yati Elementary School": {
+      sector: "Yati",
+      role: "Designated EC - School",
+      verified: true,
+      dataSource: "CDN Digital",
+      notes: "Active EC, 24 Nov 2025.",
+    },
+    "Calero Integrated School": {
+      sector: "Calero",
+      role: "Designated EC - School",
+      verified: true,
+      dataSource: "CDN Digital",
+      notes: "Active EC, 24 Nov 2025.",
+    },
+    "Cotcot Barangay Hall": {
+      sector: "Cotcot",
+      verified: false,
+      dataSource: "reference",
+      notes: "Not documented as an active EC; reference point.",
+    },
   };
   const m = meta[center.name] ?? {};
   return {
-    id: `fallback-${center.name}`,
+    id: `fallback-${center.name.split(" ").join("-").toLowerCase()}`,
     name: center.name,
     address: center.address,
     purok: null,
     lat: center.lat,
     lon: center.lon,
-    capacity: m.capacity ?? 0,
-    role: null,
+    capacity: null,
+    role: m.role ?? null,
     sector: m.sector ?? "",
     elevationM: null,
     elevationLabel: null,
     imageQuery: null,
     amenities: [],
     contact: null,
+    verified: m.verified ?? false,
+    dataSource: m.dataSource ?? null,
+    notes: m.notes ?? null,
   };
 });
 
 const FALLBACK_ZONES: HazardZone[] = [
-  { id: "fallback-zone-1", name: "Purok Masagana Lowland", severity: "high", radiusM: 300, lat: 10.3005, lon: 123.9833, description: null },
-  { id: "fallback-zone-2", name: "Cotcot River Mouth", severity: "high", radiusM: 300, lat: 10.2995, lon: 123.9828, description: null },
-  { id: "fallback-zone-3", name: "Purok Suba Coastal", severity: "moderate", radiusM: 250, lat: 10.3008, lon: 123.984, description: null },
-  { id: "fallback-zone-4", name: "Inland Low-lying Areas", severity: "low", radiusM: 350, lat: 10.2998, lon: 123.982, description: null },
+  { id: "fallback-zone-1", name: "Cotcot River Lowland", severity: "high", radiusM: 300, lat: 10.4245, lon: 124.0005, description: null },
+  { id: "fallback-zone-2", name: "Cotcot River - Masagana Creek Confluence", severity: "high", radiusM: 300, lat: 10.4275, lon: 124.0025, description: null },
+  { id: "fallback-zone-3", name: "Masagana Creek Corridor", severity: "moderate", radiusM: 250, lat: 10.43, lon: 124.004, description: null },
+  { id: "fallback-zone-4", name: "Inland Low-lying Areas", severity: "low", radiusM: 350, lat: 10.4325, lon: 124.0005, description: null },
 ];
 
 const FALLBACK_DATA: MapPageData = {
@@ -122,13 +169,17 @@ function sensorPopup(sensor: RiverSensor, color: string): string {
 }
 
 function centerPopup(center: MapCenter): string {
-  const capacity = center.capacity != null ? center.capacity : 0;
+  const statusColor = center.verified ? "#10855a" : "#6b7280";
+  const status = center.verified ? "Designated EC — active during Typhoon Tino (Nov 2025)" : "Unconfirmed — reference only";
+  const roughly = center.notes?.includes("Approximate") ? `\n      <div style="font-size:11px;color:#b45309;margin-top:2px">Approximate location</div>` : "";
   return `
-    <div style="font-family:inherit;padding:4px 0;min-width:160px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${center.name}</div>
-      <div style="font-size:11px;color:#666;margin-bottom:6px">${center.sector ?? ""}</div>
-      <div style="font-size:12px;color:#10855a;font-weight:600">Capacity: ${capacity} persons</div>
-      <div style="font-size:12px;color:#10855a;font-weight:600;margin-top:2px">Status: Standby / Ready</div>
+    <div style="font-family:inherit;padding:4px 0;min-width:180px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:2px">${center.name}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:6px">${center.sector ?? ""}${center.address ? ` · ${center.address}` : ""}</div>
+      <div style="font-size:11px;color:${statusColor};font-weight:600">\u25cf ${status}</div>
+      <div style="font-size:12px;color:#666;margin-top:4px">Capacity: ${center.capacity != null ? `${center.capacity} persons` : "— (not documented)"}</div>
+      ${center.role ? `\n      <div style="font-size:11px;color:#666;margin-top:2px">${center.role}</div>` : ""}
+      ${center.dataSource ? `\n      <div style="font-size:11px;color:#666;margin-top:2px">Source: ${center.dataSource}</div>` : ""}${roughly}
       <a href="https://maps.google.com/?q=${center.lat},${center.lon}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#00685d;font-weight:600;text-decoration:none">Get Directions \u2192</a>
     </div>`;
 }
@@ -228,7 +279,7 @@ export default function MapPage() {
       // Evacuation center markers
       const centerGroup = L.layerGroup();
       resolved.centers.forEach((center) => {
-        const marker = L.circleMarker([center.lat, center.lon], { radius: 10, color: "#ffffff", fillColor: "#10855a", fillOpacity: 1, weight: 3 });
+        const marker = L.circleMarker([center.lat, center.lon], { radius: 10, color: "#ffffff", fillColor: center.verified ? "#10855a" : "#6b7280", fillOpacity: 1, weight: 3 });
         marker.bindPopup(centerPopup(center));
         marker.addTo(centerGroup);
       });
@@ -361,7 +412,7 @@ export default function MapPage() {
                   <span className="w-2.5 h-2.5 rounded-full bg-watch animate-pulse" />
                   <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Hydrological Gauges</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm font-semibold tracking-tight">{mapData.sensors.length} Active</span>
+                <span className="px-2 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm font-semibold tracking-tight">{mapData.sensors.length} Simulated</span>
               </div>
               <div className="flex flex-col gap-2">
                 {mapData.sensors.map((sensor) => {
@@ -409,8 +460,8 @@ export default function MapPage() {
                 <span className="material-symbols-outlined text-[16px] text-accent-strong">pin_drop</span>
                 <span>Center: {COTCOT.lat}° N, {COTCOT.lon}° E • Cotcot, Liloan, Cebu</span>
               </div>
-              <span className="hidden md:inline text-on-sky-faint">• Elevation: 4.2m ASL</span>
-              <span className="hidden lg:inline text-on-sky-faint">• Hydrologic Basin: Cotcot-Pangdan Sub-Watershed</span>
+              <span className="hidden md:inline text-on-sky-faint">• Elevation not yet verified</span>
+              <span className="hidden lg:inline text-on-sky-faint">• Illustrative zones &amp; sensors</span>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span className="flex items-center gap-1 text-safe font-semibold">

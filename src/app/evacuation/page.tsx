@@ -6,38 +6,55 @@ import Reveal from "@/components/motion/Reveal";
 import { EVACUATION_CENTERS, EMERGENCY_CONTACTS } from "@/lib/constants";
 import type { MapCenter } from "@/lib/db/reference";
 
-const CENTER_META: Record<string, { role: string; sector: string; capacity: number; imageQuery: string; amenities: string[]; elevation: string }> = {
+const CENTER_META: Record<string, { role: string; sector: string; verified: boolean; dataSource: string; notes: string }> = {
+  "Tiltilon Elementary School": {
+    role: "Designated EC - School",
+    sector: "Cotcot",
+    verified: true,
+    dataSource: "PNA / DSWD DROMIC",
+    notes: "Housed 509 IDPs during Typhoon Tino (Nov 2025).",
+  },
+  "Liloan Central School": {
+    role: "Designated EC - School",
+    sector: "Poblacion",
+    verified: true,
+    dataSource: "CDN Digital / DSWD DROMIC",
+    notes: "137 Cotcot River residents relocated here, 24 Nov 2025.",
+  },
+  "Panphil B. Francisco Gymnasium": {
+    role: "Designated EC - Gymnasium / Relief Hub",
+    sector: "Poblacion",
+    verified: true,
+    dataSource: "DSWD DROMIC",
+    notes: "618 IDPs sheltered during Tino. Approximate location.",
+  },
+  "Weber Hotel": {
+    role: "Emergency Overflow Shelter - Private",
+    sector: "Poblacion",
+    verified: true,
+    dataSource: "DSWD DROMIC",
+    notes: "Overflow shelter for Tiltilon evacuees (private). Approximate location.",
+  },
+  "Yati Elementary School": {
+    role: "Designated EC - School",
+    sector: "Yati",
+    verified: true,
+    dataSource: "CDN Digital",
+    notes: "Active EC, 24 Nov 2025.",
+  },
+  "Calero Integrated School": {
+    role: "Designated EC - School",
+    sector: "Calero",
+    verified: true,
+    dataSource: "CDN Digital",
+    notes: "Active EC, 24 Nov 2025.",
+  },
   "Cotcot Barangay Hall": {
-    role: "Primary Command Station",
-    sector: "Sector A",
-    capacity: 350,
-    imageQuery: "Cotcot Barangay Hall, Liloan, Cebu",
-    amenities: ["Generator Equipped", "Medical First Aid Station", "Satellite Comm"],
-    elevation: "BDRRMO Operations Room on Level 2",
-  },
-  "Cotcot Elementary School": {
-    role: "High Elevation Zone",
-    sector: "Sector B",
-    capacity: 600,
-    imageQuery: "Cotcot Elementary School, Purok Masagana, Liloan, Cebu",
-    amenities: ["Multi-classroom Shelter", "Elevated Ground (12m)", "Sanitation Blocks"],
-    elevation: "12m Above Sea Level (Non-inundation)",
-  },
-  "Liloan Municipal Gymnasium": {
-    role: "Primary Logistics Hub",
-    sector: "Municipal Hub",
-    capacity: 800,
-    imageQuery: "Liloan Municipal Gymnasium, Poblacion, Liloan, Cebu",
-    amenities: ["Primary Relief Distribution Hub", "Covered Arena Structure", "Fleet Access"],
-    elevation: "Heavy Vehicle Ingress & Supply Depot",
-  },
-  "Sacred Heart School - Cotcot": {
-    role: "Highway Corridor Refuge",
-    sector: "Sector C",
-    capacity: 400,
-    imageQuery: "Sacred Heart School, Cotcot, Liloan, Cebu",
-    amenities: ["Kitchen & Hygiene Facilities", "Secondary Shelter", "Rainwater Filtration"],
-    elevation: "Direct Highway Access • Well Lit Perimeter",
+    role: "",
+    sector: "Cotcot",
+    verified: false,
+    dataSource: "reference",
+    notes: "Not documented as an active EC; reference point.",
   },
 };
 
@@ -49,24 +66,30 @@ interface CenterCard {
   lon: number;
   role: string | null;
   sector: string | null;
-  capacity: number;
+  capacity: number | null;
   amenities: string[];
   elevation: string | null;
+  verified: boolean;
+  dataSource: string | null;
+  notes: string | null;
 }
 
 const FALLBACK_CENTER_CARDS: CenterCard[] = EVACUATION_CENTERS.map((center) => {
-  const meta = CENTER_META[center.name] ?? { role: "", sector: "", capacity: 0, imageQuery: "", amenities: [], elevation: "" };
+  const meta = CENTER_META[center.name] ?? { role: "", sector: "", verified: false, dataSource: null, notes: null };
   return {
     key: center.name,
     name: center.name,
     address: center.address,
     lat: center.lat,
     lon: center.lon,
-    role: meta.role,
+    role: meta.role || null,
     sector: meta.sector,
-    capacity: meta.capacity,
-    amenities: meta.amenities,
-    elevation: meta.elevation,
+    capacity: null,
+    amenities: [],
+    elevation: null,
+    verified: meta.verified,
+    dataSource: meta.dataSource,
+    notes: meta.notes,
   };
 });
 
@@ -177,7 +200,7 @@ const SAFETY_GUIDE: AccordionItem[] = [
     ],
     footer: "Emergency gear checklist: Flashlight, whistle, battery radio, powerbank, hygiene kit.",
     footerIcon: "check_circle",
-    footerRef: "Cotcot BDRRMO S.O.P. #01",
+    footerRef: "General DRRM practice",
   },
   {
     id: "during",
@@ -245,9 +268,12 @@ export default function EvacuationPage() {
           lon: center.lon,
           role: center.role,
           sector: center.sector,
-          capacity: center.capacity ?? 0,
+          capacity: center.capacity ?? null,
           amenities: center.amenities,
           elevation: center.elevationLabel,
+          verified: center.verified,
+          dataSource: center.dataSource,
+          notes: center.notes,
         }));
         if (!cancelled) setCenters(cards);
       } catch {
@@ -272,7 +298,7 @@ export default function EvacuationPage() {
     });
   };
 
-  const totalCapacity = centers.reduce((sum, center) => sum + center.capacity, 0);
+  const verifiedCount = centers.filter((center) => center.verified).length;
 
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
@@ -299,22 +325,19 @@ export default function EvacuationPage() {
         <section className="flex flex-col gap-4">
           <div className="glass-card-flat p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-3 w-3 relative">
-                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-safe opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-safe" />
-              </span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-watch" />
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-3">
-                <span className="font-label-md text-label-md uppercase tracking-wider text-safe font-bold">ALL {centers.length} DESIGNATED CENTERS ARE ON STANDBY STATUS</span>
+                <span className="font-label-md text-label-md uppercase tracking-wider text-warning font-bold">DORMANT OFF-SEASON — DOCUMENTED MUNICIPAL EC ROSTER (TYPHOON TINO, NOV 2025)</span>
                 <span className="hidden sm:inline text-on-sky-faint">•</span>
-                <span className="font-label-sm text-label-sm text-on-sky-dim font-medium">Power & Clean Water Verified by Cotcot BDRRMO</span>
+                <span className="font-label-sm text-label-sm text-on-sky-dim font-medium">No centers currently open · capacities not published by LGU</span>
               </div>
             </div>
             <div className="flex items-center gap-2 self-end md:self-auto">
               <span className="bg-safe-fill text-safe px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">bolt</span> Grid Normal
+                <span className="material-symbols-outlined text-[14px]">verified</span> {verifiedCount} Documented ECs
               </span>
               <span className="bg-accent-fill text-accent-strong px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">water_drop</span> Reserves 100%
+                <span className="material-symbols-outlined text-[14px]">public</span> Public Record
               </span>
             </div>
           </div>
@@ -330,29 +353,29 @@ export default function EvacuationPage() {
                 </div>
                 <h1 className="font-headline-lg text-headline-lg text-on-sky tracking-tight leading-tight">Evacuation Centers & Emergency Directory</h1>
                 <p className="font-body-lg text-body-lg text-on-sky-dim mt-2 max-w-2xl">
-                  Designated safe refuge zones, logistical capacities, direct emergency dispatch, and comprehensive flood safety guidelines for Brgy. Cotcot residents.
+                  Documented municipal evacuation centers, emergency dispatch contacts, and comprehensive flood safety guidelines for Barangay Cotcot residents.
                 </p>
               </div>
               <div className="pt-6 mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-glass p-3 rounded-2xl">
-                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Total Refuge Pool</span>
-                  <span className="font-headline-md text-headline-md text-accent-strong font-bold">{totalCapacity.toLocaleString()}</span>
-                  <span className="font-label-sm text-label-sm text-on-sky-faint block mt-0.5">Persons capacity</span>
+                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Designated Centers</span>
+                  <span className="font-headline-md text-headline-md text-accent-strong font-bold">{centers.length}</span>
+                  <span className="font-label-sm text-label-sm text-on-sky-faint block mt-0.5">Full municipal roster</span>
                 </div>
                 <div className="bg-glass p-3 rounded-2xl">
-                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Current Occupancy</span>
-                  <span className="font-headline-md text-headline-md text-safe font-bold">0%</span>
-                  <span className="font-label-sm text-label-sm text-safe block mt-0.5">Pre-activation stage</span>
+                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Documented ECs</span>
+                  <span className="font-headline-md text-headline-md text-safe font-bold">{verifiedCount} / {centers.length}</span>
+                  <span className="font-label-sm text-label-sm text-safe block mt-0.5">Reported during Tino / Verbena</span>
                 </div>
                 <div className="bg-glass p-3 rounded-2xl">
-                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Shelters Ready</span>
-                  <span className="font-headline-md text-headline-md text-on-sky font-bold">{centers.length} / {centers.length}</span>
-                  <span className="font-label-sm text-label-sm text-accent-strong font-medium block mt-0.5">Inspected & cleared</span>
+                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Capacity Data</span>
+                  <span className="font-headline-md text-headline-md text-on-sky font-bold">—</span>
+                  <span className="font-label-sm text-label-sm text-accent-strong font-medium block mt-0.5">Not published by LGU</span>
                 </div>
                 <div className="bg-glass p-3 rounded-2xl">
-                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Avg. Ingress Time</span>
-                  <span className="font-headline-md text-headline-md text-accent-strong font-bold">6.4</span>
-                  <span className="font-label-sm text-label-sm text-on-sky-dim block mt-0.5">Mins foot transit</span>
+                  <span className="font-label-sm text-label-sm text-on-sky-dim uppercase tracking-wider block">Ingress Times</span>
+                  <span className="font-headline-md text-headline-md text-accent-strong font-bold">—</span>
+                  <span className="font-label-sm text-label-sm text-on-sky-dim block mt-0.5">Not measured</span>
                 </div>
               </div>
             </div>
@@ -363,11 +386,11 @@ export default function EvacuationPage() {
               <div className="relative">
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-label-md text-label-md tracking-widest text-accent-strong uppercase font-semibold">Immediate Dispatch</span>
-                  <span className="bg-accent-fill text-accent-strong px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold">24/7 BDRRMO</span>
+                  <span className="bg-accent-fill text-accent-strong px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold">Liloan DRRMC</span>
                 </div>
                 <h2 className="font-headline-md text-headline-md text-on-sky font-bold tracking-tight">Need Assisted Evacuation?</h2>
                 <p className="font-body-md text-body-md text-on-sky-dim mt-2">
-                  If water enters your residential zone or you have elderly, PWD, or infants needing rescue transport, contact Cotcot Command immediately.
+                  If water enters your area or you have elderly, PWD, or infants needing rescue transport, contact the Liloan DRRMO immediately.
                 </p>
               </div>
               <div className="flex flex-col gap-2 mt-6 pt-2 relative">
@@ -390,12 +413,12 @@ export default function EvacuationPage() {
         <section className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="font-headline-md text-headline-md text-on-sky tracking-tight">Designated Evacuation Shelters</h2>
-              <p className="font-body-md text-body-md text-on-sky-dim">Real-time status, architectural capacity, and logistical amenities across Barangay Cotcot sectors.</p>
+              <h2 className="font-headline-md text-headline-md text-on-sky tracking-tight">Municipal Evacuation Centers</h2>
+              <p className="font-body-md text-body-md text-on-sky-dim">Documented EC roster from the public record (Typhoon Tino, Nov 2025). Capacities and amenities shown only where published.</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-label-sm text-label-sm text-on-sky-dim">Live telemetry synched with GIS</span>
-              <span className="material-symbols-outlined text-accent-strong text-[18px]">satellite_alt</span>
+              <span className="font-label-sm text-label-sm text-on-sky-dim">Roster verified against DSWD / news reports</span>
+              <span className="material-symbols-outlined text-accent-strong text-[18px]">verified</span>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -406,7 +429,7 @@ export default function EvacuationPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="bg-accent-fill text-accent-strong font-label-sm text-label-sm px-2 py-0.5 rounded-md font-semibold">{center.role ?? ""}</span>
+                          <span className="bg-accent-fill text-accent-strong font-label-sm text-label-sm px-2 py-0.5 rounded-md font-semibold">{center.role ?? "Reference Site"}</span>
                           <span className="text-on-sky-faint">•</span>
                           <span className="font-label-sm text-label-sm text-on-sky-dim font-mono">{center.lat}° N, {center.lon}° E</span>
                         </div>
@@ -415,37 +438,58 @@ export default function EvacuationPage() {
                           <span className="material-symbols-outlined text-accent-strong text-[16px]">pin_drop</span>
                           {center.address ?? ""}
                         </p>
+                        {center.dataSource ? (
+                          <p className="font-label-sm text-label-sm text-on-sky-faint mt-1">Source: {center.dataSource}</p>
+                        ) : null}
                       </div>
-                      <span className="bg-safe-fill text-safe px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
-                        <span className="h-2 w-2 rounded-full bg-safe" /> Standby / Ready
-                      </span>
+                      {center.verified ? (
+                        <span className="bg-safe-fill text-safe px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
+                          <span className="material-symbols-outlined text-[14px]">verified</span> Designated EC
+                        </span>
+                      ) : (
+                        <span className="bg-glass-card text-on-sky-dim px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
+                          <span className="material-symbols-outlined text-[14px]">help</span> Unconfirmed
+                        </span>
+                      )}
                     </div>
                     <div className="h-44 w-full rounded-2xl overflow-hidden relative bg-glass-elevated">
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-label-sm font-label-sm">
-                        <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">{center.elevation}</span>
+                        {center.elevation ? (
+                          <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">{center.elevation}</span>
+                        ) : (
+                          <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">Public-ground facility</span>
+                        )}
                         <span className="bg-accent-strong text-on-accent px-3 py-1 rounded-full">{center.sector ?? ""}</span>
                       </div>
                     </div>
                     <div className="bg-glass p-4 rounded-2xl flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <span className="font-label-sm text-label-sm text-on-sky-dim uppercase font-semibold">Capacity Threshold</span>
-                        <span className="font-title-sm text-title-sm text-accent-strong font-bold">{center.capacity} Persons</span>
+                        <span className="font-title-sm text-title-sm text-accent-strong font-bold">{center.capacity != null ? `${center.capacity} Persons` : "— Not Published"}</span>
                       </div>
-                      <div className="w-full bg-glass-strong rounded-full h-2 overflow-hidden">
-                        <div className="bg-safe h-full rounded-full" style={{ width: "3%" }} />
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap pt-1">
-                        {center.amenities.map((a) => {
-                          const icon = AMENITY_ICONS[a] ?? "check_circle";
-                          const color = AMENITY_COLORS[icon] ?? "text-safe";
-                          return (
-                            <span key={a} className="bg-glass-card text-on-sky-dim px-2 py-0.5 rounded text-label-sm font-label-sm flex items-center gap-1">
-                              <span className={`material-symbols-outlined text-[14px] ${color}`}>{icon}</span> {a}
-                            </span>
-                          );
-                        })}
-                      </div>
+                      {center.capacity != null ? (
+                        <div className="w-full bg-glass-strong rounded-full h-2 overflow-hidden">
+                          <div className="bg-safe h-full rounded-full" style={{ width: "3%" }} />
+                        </div>
+                      ) : (
+                        <p className="font-label-sm text-label-sm text-on-sky-faint">Design capacity not published by the LGU for this facility.</p>
+                      )}
+                      {center.amenities.length > 0 ? (
+                        <div className="flex items-center gap-2 flex-wrap pt-1">
+                          {center.amenities.map((a) => {
+                            const icon = AMENITY_ICONS[a] ?? "check_circle";
+                            const color = AMENITY_COLORS[icon] ?? "text-safe";
+                            return (
+                              <span key={a} className="bg-glass-card text-on-sky-dim px-2 py-0.5 rounded text-label-sm font-label-sm flex items-center gap-1">
+                                <span className={`material-symbols-outlined text-[14px] ${color}`}>{icon}</span> {a}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="font-label-sm text-label-sm text-on-sky-faint">No amenities documented in the public record.</p>
+                      )}
                     </div>
                   </div>
                   <div className="pt-4 mt-4 grid grid-cols-2 gap-3">
@@ -455,7 +499,7 @@ export default function EvacuationPage() {
                     </a>
                     <a className="glass-btn" href="tel:0322734321">
                       <span className="material-symbols-outlined text-[18px] text-accent-strong">call</span>
-                      <span className="">Call Station</span>
+                      <span className="">Call Liloan DRRMO</span>
                     </a>
                   </div>
                 </article>
