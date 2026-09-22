@@ -84,7 +84,7 @@ export type EmergencyContact = {
 
 export const EMERGENCY_CONTACTS: readonly EmergencyContact[] = [
   {
-    name: "Liloan DRRMO",
+    name: "Liloan MDRRMO",
     number: "0956 271 1967",
     altNumber: "0923 905 9077",
     source: "Cebu PDRRMO hotline list, GMA News (Oct 2025)",
@@ -97,9 +97,9 @@ export const EMERGENCY_CONTACTS: readonly EmergencyContact[] = [
   },
   {
     name: "Bureau of Fire Protection - Liloan",
-    number: "(032) 564-3781",
+    number: "0905 350 3109",
     altNumber: null,
-    source: "Liloan Community Service Directory (2019)",
+    source: "Verified municipal fire contact",
   },
   {
     name: "Philippine Red Cross - Cebu",

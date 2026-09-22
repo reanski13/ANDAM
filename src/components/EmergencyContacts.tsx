@@ -4,7 +4,7 @@ import Link from "next/link";
 import { EMERGENCY_CONTACTS } from "@/lib/constants";
 
 const contactMeta: Record<string, { role: string; icon: string; iconBg: string; iconColor: string }> = {
-  "Liloan DRRMO": { role: "Primary Dispatch", icon: "flood", iconBg: "bg-accent-fill", iconColor: "text-accent-strong" },
+  "Liloan MDRRMO": { role: "Primary Dispatch", icon: "flood", iconBg: "bg-accent-fill", iconColor: "text-accent-strong" },
   "Cebu Provincial DRRMO": { role: "Provincial Operations", icon: "support_agent", iconBg: "bg-accent-fill", iconColor: "text-accent-strong" },
   "Bureau of Fire Protection - Liloan": { role: "Rescue & Watercraft", icon: "local_fire_department", iconBg: "bg-danger-fill", iconColor: "text-danger" },
   "Philippine Red Cross - Cebu": { role: "Medical & Evac", icon: "health_and_safety", iconBg: "bg-danger-fill", iconColor: "text-danger" },
@@ -88,7 +88,7 @@ export default function EmergencyContacts() {
           <span className="font-label-sm text-label-sm text-on-sky-faint">Radio VHF Ch 142.500 MHz Standing By</span>
         </div>
         <a
-          href="tel:0322734321"
+          href="tel:09562711967"
           className="pill-btn pill-btn-primary"
         >
           <span className="material-symbols-outlined text-[18px]">emergency</span>
