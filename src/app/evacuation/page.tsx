@@ -296,7 +296,7 @@ export default function EvacuationPage() {
 
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
-      <div className="top-scrim sticky top-0 z-40">
+      <div className="top-scrim sticky top-0 z-[1050]">
         <DashboardHeader />
       </div>
 
