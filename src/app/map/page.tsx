@@ -215,14 +215,48 @@ async function resolveMapData(): Promise<MapPageData> {
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapBoxRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<MapWithLayers | null>(null);
   const [mapData, setMapData] = useState<MapPageData>(FALLBACK_DATA);
   const [layers, setLayers] = useState({ hazard: true, sensors: true, centers: true });
+  const [fullscreenMode, setFullscreenMode] = useState<"none" | "native" | "css">("none");
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setFullscreenMode(document.fullscreenElement === mapBoxRef.current ? "native" : "none");
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const el = mapBoxRef.current;
+    if (!el) return;
+    if (document.fullscreenElement === el || fullscreenMode === "native") {
+      await document.exitFullscreen();
+      return;
+    }
+    if (fullscreenMode === "css") {
+      setFullscreenMode("none");
+      return;
+    }
+    if (document.fullscreenEnabled) {
+      try {
+        await el.requestFullscreen({ navigationUI: "hide" });
+        setFullscreenMode("native");
+        return;
+      } catch {
+        // fall through to CSS fullscreen for browsers/contexts without element fullscreen
+      }
+    }
+    setFullscreenMode("css");
+  };
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
     let cancelled = false;
+    let resizeObserver: ResizeObserver | null = null;
 
     (async () => {
       const [resolved, L] = await Promise.all([
@@ -246,6 +280,12 @@ export default function MapPage() {
       }).addTo(map);
 
       L.control.zoom({ position: "topright" }).addTo(map);
+
+      const box = mapBoxRef.current;
+      if (box) {
+        resizeObserver = new ResizeObserver(() => map.invalidateSize());
+        resizeObserver.observe(box);
+      }
 
       // Flood hazard zones as circular overlays
       const hazardGroup = L.layerGroup();
@@ -304,6 +344,7 @@ export default function MapPage() {
 
     return () => {
       cancelled = true;
+      resizeObserver?.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -399,7 +440,10 @@ export default function MapPage() {
 
         {/* Map Canvas */}
         <Reveal delay={0.05}>
-          <div className="relative w-full h-[800px] lg:h-[720px] rounded-3xl overflow-hidden ring-1 ring-glass-border shadow-[var(--sky-shadow)] select-none">
+          <div
+            ref={mapBoxRef}
+            className={`relative w-full h-[800px] lg:h-[720px] rounded-3xl overflow-hidden ring-1 ring-glass-border shadow-[var(--sky-shadow)] select-none ${fullscreenMode === "css" ? "map-box-fs" : ""}`}
+          >
           <div ref={mapRef} className="w-full h-full z-0" />
 
           {/* Floating Legend Panel */}
@@ -452,7 +496,7 @@ export default function MapPage() {
           </div>
 
           {/* Bottom Status Strip */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-glass/85 backdrop-blur-md z-[1000] flex items-center justify-between px-4 border-t border-glass-border text-on-sky-dim font-label-sm text-label-sm">
+          <div className="map-status-strip absolute bottom-0 left-0 right-0 h-12 bg-glass/85 backdrop-blur-md z-[1000] flex items-center justify-between px-4 border-t border-glass-border text-on-sky-dim font-label-sm text-label-sm">
             <div className="flex items-center gap-4 truncate">
               <div className="flex items-center gap-1.5 font-medium text-on-sky">
                 <span className="material-symbols-outlined text-[16px] text-accent-strong">pin_drop</span>
@@ -462,9 +506,18 @@ export default function MapPage() {
               <span className="hidden lg:inline text-on-sky-faint">• Illustrative zones &amp; sensors</span>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <span className="flex items-center gap-1 text-safe font-semibold">
+              <span className="hidden sm:flex items-center gap-1 text-safe font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-safe" /> Reference Telemetry (Simulated)
               </span>
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                aria-label={fullscreenMode === "none" ? "Enter map fullscreen" : "Exit map fullscreen"}
+                title={fullscreenMode === "none" ? "Enter fullscreen" : "Exit fullscreen"}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-glass text-on-sky-dim hover:text-accent-strong transition"
+              >
+                <span className="material-symbols-outlined text-[18px]">{fullscreenMode === "none" ? "fullscreen" : "fullscreen_exit"}</span>
+              </button>
             </div>
           </div>
         </div>

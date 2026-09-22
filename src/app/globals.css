@@ -301,6 +301,22 @@ body {
   --accent-inset: inset 0 1px 0 rgba(29, 78, 216, 0.25);
 }
 
+.map-box-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.map-box-fs .map-status-strip {
+  height: calc(3rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 .glass-chip {
   background: var(--glass-card);
   border: 1px solid var(--glass-border);
