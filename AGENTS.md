@@ -19,3 +19,11 @@ Read these before editing anything:
 `README.md` and `UI_STRUCTURE.md` are outdated — trust `PROJECT_OVERVIEW.md` + `DESIGN.md`.
 
 After changes: `npm run lint` (baseline: 2 pre-existing font warnings in `src/app/layout.tsx`) and `npm run build`. Never commit or print secrets from `.env.local`.
+
+# Git workflow (branch per feature)
+
+Every new feature or task gets its own branch off `main`, with a descriptive
+name (e.g. `frontend/evacuation-ui`, `s7-telemetry-pipeline`). Work, test, and
+lint/build on that branch. Only after it is verified and the user approves do
+you: merge into `main` → commit → push. `main` stays always-deployable; never
+commit directly to `main` for feature work.

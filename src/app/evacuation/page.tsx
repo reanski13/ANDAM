@@ -49,13 +49,6 @@ const CENTER_META: Record<string, { role: string; sector: string; verified: bool
     dataSource: "CDN Digital",
     notes: "Active EC, 24 Nov 2025.",
   },
-  "Cotcot Barangay Hall": {
-    role: "",
-    sector: "Cotcot",
-    verified: false,
-    dataSource: "reference",
-    notes: "Not documented as an active EC; reference point.",
-  },
 };
 
 interface CenterCard {
@@ -248,6 +241,7 @@ const SAFETY_GUIDE: AccordionItem[] = [
 
 export default function EvacuationPage() {
   const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set(["before"]));
+  const [openCenterKey, setOpenCenterKey] = useState<string | null>(FALLBACK_CENTER_CARDS[0]?.key ?? null);
   const [centers, setCenters] = useState<CenterCard[]>(FALLBACK_CENTER_CARDS);
 
   useEffect(() => {
@@ -398,10 +392,11 @@ export default function EvacuationPage() {
                   <span className="material-symbols-outlined text-danger text-[20px]">sos</span>
                   <span className="font-bold">Call National 911 Hotline</span>
                 </a>
-                <a className="w-full glass-btn" href="tel:0322734321">
+                <a className="w-full glass-btn" href="tel:09562711967">
                   <span className="material-symbols-outlined text-[18px]">phone_in_talk</span>
-                  <span className="">Liloan DRRMO: (032) 273-4321</span>
+                  <span className="">Liloan DRRMO: 0956 271 1967</span>
                 </a>
+                <p className="font-label-sm text-label-sm text-on-sky-faint text-center">Verified via Cebu PDRRMO hotline list (GMA News, Oct 2025)</p>
               </div>
             </div>
           </div>
@@ -414,95 +409,104 @@ export default function EvacuationPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 className="font-headline-md text-headline-md text-on-sky tracking-tight">Municipal Evacuation Centers</h2>
-              <p className="font-body-md text-body-md text-on-sky-dim">Documented EC roster from the public record (Typhoon Tino, Nov 2025). Capacities and amenities shown only where published.</p>
+              <p className="font-body-md text-body-md text-on-sky-dim">Documented EC roster from the public record (Typhoon Tino, Nov 2025). Capacities and amenities shown only where published. Tap a center to expand details, amenities, and directions.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-label-sm text-label-sm text-on-sky-dim">Roster verified against DSWD / news reports</span>
               <span className="material-symbols-outlined text-accent-strong text-[18px]">verified</span>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-4">
             {centers.map((center) => {
+              const isOpen = openCenterKey === center.key;
               return (
-                <article key={center.key} className="glass-card p-6 flex flex-col justify-between interactive-card">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
+                <div key={center.key} className="glass-card rounded-3xl overflow-hidden transition duration-300">
+                  <button
+                    className="w-full p-5 md:p-6 flex items-center justify-between gap-4 text-left hover:bg-glass-elevated/40 transition-colors cursor-pointer"
+                    onClick={() => setOpenCenterKey(isOpen ? null : center.key)}
+                    aria-expanded={isOpen}
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className={`w-11 h-11 md:w-12 md:h-12 rounded-2xl ${center.verified ? "bg-safe-fill text-safe" : "bg-glass-card text-on-sky-dim"} flex items-center justify-center shrink-0`}>
+                        <span className="material-symbols-outlined text-[24px]">{center.verified ? "apartment" : "map"}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="bg-accent-fill text-accent-strong font-label-sm text-label-sm px-2 py-0.5 rounded-md font-semibold">{center.role ?? "Reference Site"}</span>
-                          <span className="text-on-sky-faint">•</span>
-                          <span className="font-label-sm text-label-sm text-on-sky-dim font-mono">{center.lat}° N, {center.lon}° E</span>
+                          {center.verified ? (
+                            <span className="bg-safe-fill text-safe px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">verified</span> Designated EC
+                            </span>
+                          ) : (
+                            <span className="bg-glass-card text-on-sky-dim px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">help</span> Unconfirmed
+                            </span>
+                          )}
                         </div>
-                        <h3 className="font-title-lg text-title-lg text-on-sky mt-1">{center.name}</h3>
+                        <h3 className="font-title-lg text-title-lg text-on-sky mt-0.5 truncate">{center.name}</h3>
                         <p className="font-body-md text-body-md text-on-sky-dim flex items-center gap-1 mt-0.5">
-                          <span className="material-symbols-outlined text-accent-strong text-[16px]">pin_drop</span>
-                          {center.address ?? ""}
+                          <span className="material-symbols-outlined text-accent-strong text-[15px] shrink-0">pin_drop</span>
+                          <span className="truncate">{center.address ?? ""}</span>
                         </p>
-                        {center.dataSource ? (
-                          <p className="font-label-sm text-label-sm text-on-sky-faint mt-1">Source: {center.dataSource}</p>
-                        ) : null}
-                      </div>
-                      {center.verified ? (
-                        <span className="bg-safe-fill text-safe px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
-                          <span className="material-symbols-outlined text-[14px]">verified</span> Designated EC
-                        </span>
-                      ) : (
-                        <span className="bg-glass-card text-on-sky-dim px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
-                          <span className="material-symbols-outlined text-[14px]">help</span> Unconfirmed
-                        </span>
-                      )}
-                    </div>
-                    <div className="h-44 w-full rounded-2xl overflow-hidden relative bg-glass-elevated">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-label-sm font-label-sm">
-                        {center.elevation ? (
-                          <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">{center.elevation}</span>
-                        ) : (
-                          <span className="bg-glass-card text-on-sky px-3 py-1 rounded-full font-medium">Public-ground facility</span>
-                        )}
-                        <span className="bg-accent-strong text-on-accent px-3 py-1 rounded-full">{center.sector ?? ""}</span>
                       </div>
                     </div>
-                    <div className="bg-glass p-4 rounded-2xl flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-label-sm text-label-sm text-on-sky-dim uppercase font-semibold">Capacity Threshold</span>
-                        <span className="font-title-sm text-title-sm text-accent-strong font-bold">{center.capacity != null ? `${center.capacity} Persons` : "— Not Published"}</span>
-                      </div>
-                      {center.capacity != null ? (
-                        <div className="w-full bg-glass-strong rounded-full h-2 overflow-hidden">
-                          <div className="bg-safe h-full rounded-full" style={{ width: "3%" }} />
+                    <span className={`material-symbols-outlined text-on-sky-dim transition-transform duration-300 transform shrink-0 ${isOpen ? "rotate-180" : ""}`}>expand_more</span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 md:px-6 pb-6 pt-2 flex flex-col gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-glass p-4 rounded-2xl flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-label-sm text-label-sm text-on-sky-dim uppercase font-semibold">Capacity Threshold</span>
+                            <span className="font-title-sm text-title-sm text-accent-strong font-bold">{center.capacity != null ? `${center.capacity} Persons` : "— Not Published"}</span>
+                          </div>
+                          {center.capacity != null ? (
+                            <div className="w-full bg-glass-strong rounded-full h-2 overflow-hidden">
+                              <div className="bg-safe h-full rounded-full" style={{ width: "3%" }} />
+                            </div>
+                          ) : (
+                            <p className="font-label-sm text-label-sm text-on-sky-faint">Design capacity not published by the LGU for this facility.</p>
+                          )}
+                          <div className="flex items-center gap-2 flex-wrap pt-1">
+                            {center.amenities.length > 0 ? (
+                              center.amenities.map((a) => {
+                                const icon = AMENITY_ICONS[a] ?? "check_circle";
+                                const color = AMENITY_COLORS[icon] ?? "text-safe";
+                                return (
+                                  <span key={a} className="bg-glass-card text-on-sky-dim px-2 py-0.5 rounded text-label-sm font-label-sm flex items-center gap-1">
+                                    <span className={`material-symbols-outlined text-[14px] ${color}`}>{icon}</span> {a}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="font-label-sm text-label-sm text-on-sky-faint">No amenities documented in the public record.</span>
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <p className="font-label-sm text-label-sm text-on-sky-faint">Design capacity not published by the LGU for this facility.</p>
-                      )}
-                      {center.amenities.length > 0 ? (
-                        <div className="flex items-center gap-2 flex-wrap pt-1">
-                          {center.amenities.map((a) => {
-                            const icon = AMENITY_ICONS[a] ?? "check_circle";
-                            const color = AMENITY_COLORS[icon] ?? "text-safe";
-                            return (
-                              <span key={a} className="bg-glass-card text-on-sky-dim px-2 py-0.5 rounded text-label-sm font-label-sm flex items-center gap-1">
-                                <span className={`material-symbols-outlined text-[14px] ${color}`}>{icon}</span> {a}
-                              </span>
-                            );
-                          })}
+                        <div className="bg-glass p-4 rounded-2xl flex flex-col gap-2">
+                          <span className="font-label-sm text-label-sm text-on-sky-dim uppercase font-semibold">Position</span>
+                          <p className="font-title-sm text-title-sm text-on-sky font-mono">{center.lat}° N, {center.lon}° E</p>
+                          {center.dataSource ? (
+                            <p className="font-label-sm text-label-sm text-on-sky-faint">Source: {center.dataSource}</p>
+                          ) : null}
+                          {center.notes ? (
+                            <p className="font-body-md text-body-md text-on-sky-dim">{center.notes}</p>
+                          ) : null}
                         </div>
-                      ) : (
-                        <p className="font-label-sm text-label-sm text-on-sky-faint">No amenities documented in the public record.</p>
-                      )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a className="pill-btn pill-btn-primary" href={`https://maps.google.com/?q=${center.lat},${center.lon}`} rel="noopener noreferrer" target="_blank">
+                          <span className="material-symbols-outlined text-[18px]">near_me</span>
+                          <span className="">Get Directions</span>
+                        </a>
+                        <a className="glass-btn" href="tel:09562711967">
+                          <span className="material-symbols-outlined text-[18px] text-accent-strong">call</span>
+                          <span className="">Call Liloan DRRMO</span>
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                  <div className="pt-4 mt-4 grid grid-cols-2 gap-3">
-                    <a className="pill-btn pill-btn-primary" href={`https://maps.google.com/?q=${center.lat},${center.lon}`} rel="noopener noreferrer" target="_blank">
-                      <span className="material-symbols-outlined text-[18px]">near_me</span>
-                      <span className="">Get Directions</span>
-                    </a>
-                    <a className="glass-btn" href="tel:0322734321">
-                      <span className="material-symbols-outlined text-[18px] text-accent-strong">call</span>
-                      <span className="">Call Liloan DRRMO</span>
-                    </a>
-                  </div>
-                </article>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -542,6 +546,10 @@ export default function EvacuationPage() {
                     <span className={`font-label-sm text-label-sm ${isNDRRMC ? "text-warning" : "text-on-sky-dim"} font-semibold uppercase tracking-wider block`}>{role}</span>
                     <h3 className="font-title-sm text-title-sm text-on-sky mt-0.5">{contact.name}</h3>
                     <p className={`font-body-md text-body-md ${isNDRRMC ? "text-on-sky" : phoneColor} font-bold mt-2 font-mono ${isNDRRMC ? "tracking-wider" : ""}`}>{contact.number}</p>
+                    {contact.altNumber ? (
+                      <p className="font-label-sm text-label-sm text-on-sky-dim mt-1">Alt: {contact.altNumber}</p>
+                    ) : null}
+                    <p className="font-label-sm text-label-sm text-on-sky-faint mt-1">{contact.source}</p>
                   </div>
                   <div className={`mt-4 pt-2 flex items-center justify-between ${isNDRRMC ? "text-warning" : "text-accent-strong"} font-label-sm text-label-sm font-semibold`}>
                     <span className="">{isNDRRMC ? "Toll-Free Immediate" : "Tap to Dial"}</span>
