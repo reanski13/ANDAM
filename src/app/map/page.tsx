@@ -112,12 +112,6 @@ const FALLBACK_CENTERS: MapCenter[] = EVACUATION_CENTERS.map((center) => {
       dataSource: "CDN Digital",
       notes: "Active EC, 24 Nov 2025.",
     },
-    "Cotcot Barangay Hall": {
-      sector: "Cotcot",
-      verified: false,
-      dataSource: "reference",
-      notes: "Not documented as an active EC; reference point.",
-    },
   };
   const m = meta[center.name] ?? {};
   return {

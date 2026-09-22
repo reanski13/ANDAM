@@ -73,13 +73,44 @@ export const EVACUATION_CENTERS = [
   { name: "Weber Hotel", address: "Poblacion, Liloan, Cebu", lat: 10.401, lon: 124.0 },
   { name: "Yati Elementary School", address: "Cebu North Road, Yati, Liloan, Cebu", lat: 10.39352, lon: 123.98301 },
   { name: "Calero Integrated School", address: "J. Pepito Street, Calero, Liloan, Cebu", lat: 10.36374, lon: 123.99849 },
-  { name: "Cotcot Barangay Hall", address: "Barangay Cotcot, Liloan, Cebu", lat: 10.4276, lon: 124.0017 },
 ] as const;
 
-export const EMERGENCY_CONTACTS = [
-  { name: "Liloan DRRMO", number: "(032) 273-4321" },
-  { name: "Cebu Provincial DRRMO", number: "(032) 253-4891" },
-  { name: "Bureau of Fire Protection - Liloan", number: "(032) 273-0000" },
-  { name: "Philippine Red Cross - Cebu", number: "(032) 255-7018" },
-  { name: "NDRRMC Hotline", number: "911" },
-] as const;
+export type EmergencyContact = {
+  name: string;
+  number: string;
+  altNumber: string | null;
+  source: string;
+};
+
+export const EMERGENCY_CONTACTS: readonly EmergencyContact[] = [
+  {
+    name: "Liloan DRRMO",
+    number: "0956 271 1967",
+    altNumber: "0923 905 9077",
+    source: "Cebu PDRRMO hotline list, GMA News (Oct 2025)",
+  },
+  {
+    name: "Cebu Provincial DRRMO",
+    number: "(032) 255-0046",
+    altNumber: null,
+    source: "CPDRRMO Public Service Directory (2025)",
+  },
+  {
+    name: "Bureau of Fire Protection - Liloan",
+    number: "(032) 564-3781",
+    altNumber: null,
+    source: "Liloan Community Service Directory (2019)",
+  },
+  {
+    name: "Philippine Red Cross - Cebu",
+    number: "143",
+    altNumber: "(032) 328-9238",
+    source: "Philippine Red Cross (redcross.org.ph)",
+  },
+  {
+    name: "NDRRMC Hotline",
+    number: "911",
+    altNumber: null,
+    source: "NDRRMC nationwide emergency hotline",
+  },
+];
