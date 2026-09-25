@@ -16,10 +16,15 @@ interface WeatherHeroCardProps {
   rainfall1h: number;
 }
 
-function DetailCell({ label, value, sub }: { label: string; value: string; sub: string }) {
+function DetailCell({ label, value, sub, status, statusClass }: { label: string; value: string; sub: string; status?: string; statusClass?: string }) {
   return (
     <div className="flex flex-col justify-between gap-1 p-4 min-h-[92px]">
-      <span className="font-label-sm text-label-sm text-on-sky-faint uppercase tracking-wider font-semibold">{label}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-label-sm text-label-sm text-on-sky-faint uppercase tracking-wider font-semibold">{label}</span>
+        {status && statusClass && (
+          <span className={`status-chip ${statusClass} font-semibold`}>{status}</span>
+        )}
+      </div>
       <span className="font-title-sm text-title-sm font-bold text-on-sky truncate">{value}</span>
       <span className="font-label-sm text-label-sm text-on-sky-faint truncate">{sub}</span>
     </div>
@@ -38,6 +43,22 @@ export default function WeatherHeroCard({
   icon,
   rainfall1h,
 }: WeatherHeroCardProps) {
+  const humidityStatus =
+    humidity >= 90
+      ? { label: "High", cls: "bg-watch-fill text-watch" }
+      : humidity >= 70
+        ? { label: "Moderate", cls: "bg-glass text-accent-strong" }
+        : { label: "Good", cls: "bg-safe-fill text-safe" };
+
+  const windStatus =
+    windSpeed >= 62
+      ? { label: "Gale", cls: "bg-danger-fill text-danger" }
+      : windSpeed >= 39
+        ? { label: "Strong", cls: "bg-warning-fill text-warning" }
+        : { label: "Good", cls: "bg-safe-fill text-safe" };
+
+  const pressureStatus = { label: "Steady Trend", cls: "bg-safe-fill text-safe" };
+
   return (
     <section className="flex flex-col gap-5">
       {/* Station chip */}
@@ -66,9 +87,9 @@ export default function WeatherHeroCard({
       {/* Detail grid — glass, iOS hairlines */}
       <div className="glass-card overflow-hidden p-0">
         <div className="grid grid-cols-2 md:grid-cols-3 divide-x divide-y divide-glass-border">
-          <DetailCell label="Humidity" value={`${humidity}%`} sub="Relative humidity" />
-          <DetailCell label="Wind" value={`${windSpeed.toFixed(1)} km/h`} sub="Current velocity" />
-          <DetailCell label="Pressure" value={`${pressure.toFixed(0)} hPa`} sub="Barometric" />
+          <DetailCell label="Humidity" value={`${humidity}%`} sub="Relative humidity" status={humidityStatus.label} statusClass={humidityStatus.cls} />
+          <DetailCell label="Wind" value={`${windSpeed.toFixed(1)} km/h`} sub="Current velocity" status={windStatus.label} statusClass={windStatus.cls} />
+          <DetailCell label="Pressure" value={`${pressure.toFixed(0)} hPa`} sub="Barometric" status={pressureStatus.label} statusClass={pressureStatus.cls} />
           <DetailCell label="Rainfall (1h)" value={`${rainfall1h.toFixed(1)} mm`} sub="Prev. hour" />
           <DetailCell label="Visibility" value={`${(visibility / 1000).toFixed(1)} km`} sub="Range of view" />
           <DetailCell label="Feels like" value={`${feelsLike.toFixed(1)}°C`} sub="Heat index" />
