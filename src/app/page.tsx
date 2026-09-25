@@ -5,7 +5,6 @@ import { AnimatePresence } from "motion/react";
 import DashboardHeader from "@/components/DashboardHeader";
 import FloodRiskCard from "@/components/FloodRiskCard";
 import WeatherHeroCard from "@/components/WeatherHeroCard";
-import ConditionCard from "@/components/ConditionCard";
 import ForecastStrip from "@/components/ForecastStrip";
 import RainfallTrend from "@/components/RainfallTrend";
 import AlertBanner from "@/components/AlertBanner";
@@ -14,7 +13,6 @@ import EmergencyContacts from "@/components/EmergencyContacts";
 import Reveal from "@/components/motion/Reveal";
 import Stagger from "@/components/motion/Stagger";
 import StaggerItem from "@/components/motion/StaggerItem";
-import { Droplets, Wind, Gauge } from "lucide-react";
 import { skyFor } from "@/lib/sky";
 import type { AlertLevel } from "@/lib/constants";
 
@@ -233,51 +231,6 @@ export default function Home() {
                 )}
               </StaggerItem>
             </Stagger>
-
-            {/* Ambient telemetry */}
-            {current && (
-              <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StaggerItem>
-                  <ConditionCard
-                    title="Humidity"
-                    value={current.humidity.toString()}
-                    unit="Relative Hum."
-                    icon={Droplets}
-                    status={current.humidity >= 90 ? "High" : current.humidity >= 70 ? "Moderate" : "Good"}
-                    statusColor={current.humidity >= 90 ? "watch" : current.humidity >= 70 ? "neutral" : "safe"}
-                    trend={`↑ ${current.humidity >= 80 ? "Rising" : "Stable"}`}
-                    gaugeValue={current.humidity}
-                    gaugeColor="primary"
-                  />
-                </StaggerItem>
-                <StaggerItem>
-                  <ConditionCard
-                    title="Wind Velocity"
-                    value={current.windSpeed.toFixed(1)}
-                    unit="km/h"
-                    icon={Wind}
-                    status={current.windSpeed >= 62 ? "Gale" : current.windSpeed >= 39 ? "Strong" : "Good"}
-                    statusColor={current.windSpeed >= 62 ? "danger" : current.windSpeed >= 39 ? "warning" : "safe"}
-                    trend={`→ ${current.windSpeed >= 39 ? "Strong" : "Stable"}`}
-                    gaugeValue={Math.min(current.windSpeed / 88 * 100, 100)}
-                    gaugeColor="primary"
-                  />
-                </StaggerItem>
-                <StaggerItem>
-                  <ConditionCard
-                    title="Barometer"
-                    value={current.pressure.toFixed(0)}
-                    unit="hPa"
-                    icon={Gauge}
-                    status="Steady Trend"
-                    statusColor="safe"
-                    trend="↓ Stable"
-                    gaugeValue={Math.min(((current.pressure - 980) / 50) * 100, 100)}
-                    gaugeColor="secondary"
-                  />
-                </StaggerItem>
-              </Stagger>
-            )}
 
             {/* Rainfall trend */}
             <Reveal>
