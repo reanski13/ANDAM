@@ -60,7 +60,7 @@ export default function WeatherHeroCard({
   const pressureStatus = { label: "Steady Trend", cls: "bg-safe-fill text-safe" };
 
   return (
-    <section className="flex flex-col gap-5">
+    <section className="h-full flex flex-col justify-between gap-5">
       {/* Station chip */}
       <div className="glass-chip px-3 py-1.5 self-start inline-flex items-center gap-2 text-on-sky font-label-sm font-medium">
         <span className="w-2 h-2 rounded-full bg-safe animate-pulse-slow" />
