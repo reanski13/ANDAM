@@ -83,7 +83,7 @@ export default function FloodRiskCard({ level, riskScore, reasons, rainfall1h = 
   ];
 
   return (
-    <div className="glass-card p-6 flex flex-col justify-between gap-4 relative overflow-hidden interactive-card">
+    <div className="glass-card h-full p-6 flex flex-col justify-between gap-4 relative overflow-hidden interactive-card">
       <div className="flex flex-col gap-4 relative z-10">
         {/* Top bar */}
         <div className="flex items-center justify-between flex-wrap gap-2">

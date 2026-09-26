@@ -204,8 +204,8 @@ export default function Home() {
             </AnimatePresence>
 
             {/* Two-column hero: flood risk + weather */}
-            <Stagger className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <StaggerItem className="lg:col-span-6">
+            <Stagger className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              <StaggerItem className="lg:col-span-6 flex flex-col">
                 <FloodRiskCard
                   level={risk.level}
                   riskScore={risk.riskScore}
@@ -215,7 +215,7 @@ export default function Home() {
                   lastUpdated={data.fetchedAt}
                 />
               </StaggerItem>
-              <StaggerItem className="lg:col-span-6 pt-2">
+              <StaggerItem className="lg:col-span-6 flex flex-col">
                 {current && (
                   <WeatherHeroCard
                     temperature={current.temperature}
