@@ -76,8 +76,8 @@ export default function PagasaInfo({
 
         {synopsis && (
           <div className="bg-glass rounded-2xl p-4 mt-2">
-            <div className="flex items-center gap-1.5 font-label-md text-label-md font-bold uppercase tracking-wider mb-1 text-on-sky-dim">
-              <span className="material-symbols-outlined text-[16px]" aria-hidden="true">info</span> Synoptic Synopsis
+            <div className="flex items-center gap-1.5 font-label-md text-label-md font-bold uppercase tracking-wider mb-1 text-warning">
+              <span className="material-symbols-outlined text-[16px]" aria-hidden="true">info</span> Weather Update
             </div>
             <p className="font-body-md text-body-md leading-relaxed text-on-sky">
               {synopsis}
@@ -94,12 +94,6 @@ export default function PagasaInfo({
                   {item.condition}
                   {item.causedBy && <span className="text-on-sky-faint"> &bull; {item.causedBy}</span>}
                 </p>
-                {item.impacts && (
-                  <p className="font-body-md text-body-md text-warning flex items-start gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" />
-                    <span>{item.impacts}</span>
-                  </p>
-                )}
               </div>
             ))}
           </div>
