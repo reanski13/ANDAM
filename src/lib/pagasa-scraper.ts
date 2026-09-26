@@ -16,6 +16,7 @@ export interface PagasaWeatherData {
     coastalWater: string;
   }>;
   temperatureHumidity: Record<string, { max: string; min: string }>;
+  issuedAt: string | null;
   fetchedAt: string;
 }
 
@@ -41,9 +42,17 @@ export async function scrapePagasaVisayas(): Promise<PagasaWeatherData> {
     const windConditions: PagasaWeatherData["windConditions"] = [];
     const temperatureHumidity: Record<string, { max: string; min: string }> = {};
 
-    const synopsis = $(".synopsis .well").text().trim() ||
+    const synopsis =
+      $(".panel-heading:contains('Synopsis')").parent().find(".panel-body").text().trim() ||
+      $(".synopsis .well").text().trim() ||
       $("p:has(strong:contains('Synopsis'))").text().trim() ||
       $(".synopsis").text().trim();
+
+    const issuedAtMatch =
+      $(".issue").text().trim().match(/^Issued at:\s*(.+)$/i) ||
+      $(".issue b").text().trim().match(/^Issued at:\s*(.+)$/i) ||
+      $("body").text().match(/Issued at:\s*(.+?)(?:\n|$)/i);
+    const issuedAt = issuedAtMatch?.[1] ?.trim() ?? null;
 
     $("table").each((_tableIndex, table) => {
       const headers: string[] = [];
@@ -111,6 +120,7 @@ export async function scrapePagasaVisayas(): Promise<PagasaWeatherData> {
       forecast: visayasForecast.length > 0 ? visayasForecast : forecast,
       windConditions,
       temperatureHumidity,
+      issuedAt,
       fetchedAt: new Date().toISOString(),
     };
   } catch (error) {

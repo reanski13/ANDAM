@@ -35,6 +35,8 @@ interface WeatherData {
   } | null;
   pagasa: {
     synopsis: string;
+    issuedAt: string | null;
+    fetchedAt: string;
     forecast: Array<{
       place: string;
       condition: string;
@@ -236,6 +238,8 @@ export default function Home() {
               {data.pagasa && (
                 <PagasaInfo
                   synopsis={data.pagasa.synopsis}
+                  issuedAt={data.pagasa.issuedAt}
+                  fetchedAt={data.pagasa.fetchedAt}
                   forecast={data.pagasa.forecast}
                 />
               )}
