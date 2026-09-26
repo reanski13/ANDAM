@@ -9,7 +9,6 @@ import ForecastStrip from "@/components/ForecastStrip";
 import RainfallTrend from "@/components/RainfallTrend";
 import AlertBanner from "@/components/AlertBanner";
 import PagasaInfo from "@/components/PagasaInfo";
-import EmergencyContacts from "@/components/EmergencyContacts";
 import Reveal from "@/components/motion/Reveal";
 import Stagger from "@/components/motion/Stagger";
 import StaggerItem from "@/components/motion/StaggerItem";
@@ -36,6 +35,8 @@ interface WeatherData {
   } | null;
   pagasa: {
     synopsis: string;
+    issuedAt: string | null;
+    fetchedAt: string;
     forecast: Array<{
       place: string;
       condition: string;
@@ -232,12 +233,16 @@ export default function Home() {
               </StaggerItem>
             </Stagger>
 
-            {/* Rainfall trend */}
+            {/* PAGASA regional advisory */}
             <Reveal>
-              <RainfallTrend
-                cumulativeRainMm={data.cumulativeRainMm ?? { h6: 0, h12: 0, h24: 0 }}
-                hourlySamples={data.hourlySamples ?? 0}
-              />
+              {data.pagasa && (
+                <PagasaInfo
+                  synopsis={data.pagasa.synopsis}
+                  issuedAt={data.pagasa.issuedAt}
+                  fetchedAt={data.pagasa.fetchedAt}
+                  forecast={data.pagasa.forecast}
+                />
+              )}
             </Reveal>
 
             {/* 24-hour forecast */}
@@ -245,17 +250,12 @@ export default function Home() {
               <ForecastStrip forecast={data.forecast || []} />
             </Reveal>
 
-            {/* Bottom row */}
+            {/* Rainfall trend */}
             <Reveal>
-              <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-                {data.pagasa && (
-                  <PagasaInfo
-                    synopsis={data.pagasa.synopsis}
-                    forecast={data.pagasa.forecast}
-                  />
-                )}
-                <EmergencyContacts />
-              </section>
+              <RainfallTrend
+                cumulativeRainMm={data.cumulativeRainMm ?? { h6: 0, h12: 0, h24: 0 }}
+                hourlySamples={data.hourlySamples ?? 0}
+              />
             </Reveal>
 
             {/* Footer */}

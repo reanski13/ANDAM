@@ -102,6 +102,8 @@ export async function GET() {
       pagasa: pagasa
         ? {
             synopsis: pagasa.synopsis,
+            issuedAt: pagasa.issuedAt ?? null,
+            fetchedAt: pagasa.fetchedAt,
             forecast: pagasa.forecast,
             windConditions: pagasa.windConditions,
           }
