@@ -6,6 +6,7 @@ interface PagasaInfoProps {
   synopsis: string;
   issuedAt: string | null;
   fetchedAt: string;
+  advisoryStatus?: "ok" | "unavailable";
   forecast: Array<{
     place: string;
     condition: string;
@@ -33,11 +34,12 @@ export default function PagasaInfo({
   synopsis,
   issuedAt,
   fetchedAt,
+  advisoryStatus = "ok",
   forecast,
 }: PagasaInfoProps) {
-  const hasFloodWarning = forecast.some((item) =>
-    /flash flood|landslide/i.test(item.impacts || "")
-  );
+  const hasFloodWarning =
+    advisoryStatus === "ok" &&
+    forecast.some((item) => /flash flood|landslide/i.test(item.impacts || ""));
 
   return (
     <div className="glass-card p-6 flex flex-col justify-between gap-4 animate-fade-in delay-400">
@@ -61,46 +63,62 @@ export default function PagasaInfo({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-sm text-label-sm text-on-sky-faint mb-2">
-          {issuedAt && (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px]" aria-hidden="true">calendar_today</span>
-              <span className="font-semibold text-on-sky-dim">Issued: {formatIssued(issuedAt)}</span>
+        {advisoryStatus === "unavailable" ? (
+          <div role="status" className="bg-glass rounded-2xl p-4 flex items-start gap-2.5 mt-2">
+            <span
+              className="material-symbols-outlined text-[18px] shrink-0 text-on-sky-faint"
+              aria-hidden="true"
+            >
+              cloud_off
             </span>
-          )}
-          <span className="inline-flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[15px]" aria-hidden="true">schedule</span>
-            Fetched: {formatFetched(fetchedAt)}
-          </span>
-        </div>
-
-        {synopsis && (
-          <div className="bg-glass rounded-2xl p-4 mt-2">
-            <div className="flex items-center gap-1.5 font-label-md text-label-md font-bold uppercase tracking-wider mb-1 text-warning">
-              <span className="material-symbols-outlined text-[16px]" aria-hidden="true">info</span> Weather Update
-            </div>
-            <p className="font-body-md text-body-md leading-relaxed text-on-sky">
-              {synopsis}
+            <p className="font-body-md text-body-md text-on-sky-dim leading-snug">
+              PAGASA advisory is temporarily unavailable. Try again shortly.
             </p>
           </div>
-        )}
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-sm text-label-sm text-on-sky-faint mb-2">
+              {issuedAt && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[15px]" aria-hidden="true">calendar_today</span>
+                  <span className="font-semibold text-on-sky-dim">Issued: {formatIssued(issuedAt)}</span>
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px]" aria-hidden="true">schedule</span>
+                Fetched: {formatFetched(fetchedAt)}
+              </span>
+            </div>
 
-        {forecast.length > 0 ? (
-          <div className="flex flex-col gap-3 mt-4">
-            {forecast.map((item, i) => (
-              <div key={i} className="p-3 rounded-xl bg-glass flex flex-col gap-1">
-                <span className="font-title-sm text-title-sm text-on-sky font-semibold">{item.place}</span>
-                <p className="font-body-md text-body-md text-on-sky-dim">
-                  {item.condition}
-                  {item.causedBy && <span className="text-on-sky-faint"> &bull; {item.causedBy}</span>}
+            {synopsis && (
+              <div className="bg-glass rounded-2xl p-4 mt-2">
+                <div className="flex items-center gap-1.5 font-label-md text-label-md font-bold uppercase tracking-wider mb-1 text-warning">
+                  <span className="material-symbols-outlined text-[16px]" aria-hidden="true">info</span> Weather Update
+                </div>
+                <p className="font-body-md text-body-md leading-relaxed text-on-sky">
+                  {synopsis}
                 </p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="font-body-md text-body-md text-on-sky-faint italic mt-4">
-            No specific advisory for Visayas region right now.
-          </p>
+            )}
+
+            {forecast.length > 0 ? (
+              <div className="flex flex-col gap-3 mt-4">
+                {forecast.map((item, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-glass flex flex-col gap-1">
+                    <span className="font-title-sm text-title-sm text-on-sky font-semibold">{item.place}</span>
+                    <p className="font-body-md text-body-md text-on-sky-dim">
+                      {item.condition}
+                      {item.causedBy && <span className="text-on-sky-faint"> &bull; {item.causedBy}</span>}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="font-body-md text-body-md text-on-sky-faint italic mt-4">
+                No specific advisory for Visayas region right now.
+              </p>
+            )}
+          </>
         )}
       </div>
 

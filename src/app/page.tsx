@@ -85,10 +85,12 @@ export default function Home() {
       const json = (await res.json()) as { data: WeatherData };
       setData(json.data);
       setError(null);
-      try {
-        localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(json.data));
-      } catch {
-        /* ignore */
+      if (json.data.errors.length === 0) {
+        try {
+          localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(json.data));
+        } catch {
+          /* ignore */
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -235,14 +237,17 @@ export default function Home() {
 
             {/* PAGASA regional advisory */}
             <Reveal>
-              {data.pagasa && (
-                <PagasaInfo
-                  synopsis={data.pagasa.synopsis}
-                  issuedAt={data.pagasa.issuedAt}
-                  fetchedAt={data.pagasa.fetchedAt}
-                  forecast={data.pagasa.forecast}
-                />
-              )}
+              <PagasaInfo
+                synopsis={data.pagasa?.synopsis ?? ""}
+                issuedAt={data.pagasa?.issuedAt ?? null}
+                fetchedAt={data.pagasa?.fetchedAt ?? data.fetchedAt}
+                forecast={data.pagasa?.forecast ?? []}
+                advisoryStatus={
+                  !data.pagasa || (data.errors ?? []).some((e) => e.startsWith("PAGASA"))
+                    ? "unavailable"
+                    : "ok"
+                }
+              />
             </Reveal>
 
             {/* 24-hour forecast */}
