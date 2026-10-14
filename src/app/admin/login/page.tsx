@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, Eye, EyeOff, Loader2, Mail, ShieldCheck, ArrowLeft } from "lucide-react";
+import BrandBanner from "@/components/BrandBanner";
 import { createBrowserClient, isSupabaseConfigured } from "@/lib/supabase/browser";
 
 const REQUEST_ACCESS_EMAIL = "drrmo@liloan.gov.ph";
@@ -99,20 +99,8 @@ export default function AdminLoginPage() {
       <main className="flex-1 w-full max-w-md mx-auto px-4 py-10 flex flex-col justify-center">
         <div className="glass-card p-8 rounded-3xl animate-fade-in">
           {/* Brand */}
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-11 h-11 rounded-2xl bg-glass shadow-sm flex items-center justify-center overflow-hidden">
-              <Image
-                src="/icon-192.png"
-                alt="ANDAM logo"
-                width={44}
-                height={44}
-                className="w-full h-full object-contain p-1.5"
-              />
-            </div>
-            <div className="leading-tight">
-              <div className="text-on-sky font-semibold">ANDAM</div>
-              <div className="text-on-sky-faint text-xs font-medium">Para sa Kaugmaon</div>
-            </div>
+          <div className="mb-3">
+            <BrandBanner variant="hero" />
           </div>
 
           <div className="flex items-center gap-2 mt-6 mb-2">
