@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, CloudRain, Wind } from "lucide-react";
+import { ShieldAlert, CloudRain, WavesArrowUp } from "lucide-react";
 import type { AlertLevel } from "@/lib/constants";
 import AnimatedNumber from "@/components/motion/AnimatedNumber";
 
@@ -56,24 +56,25 @@ const levelConfig = {
   },
 };
 
-function getSeverityLabel(val: number, type: "rain" | "wind"): string {
-  if (type === "rain") {
-    if (val >= 50) return "Torrential";
-    if (val >= 30) return "Intense";
-    if (val >= 15) return "Heavy";
-    if (val >= 7.5) return "Moderate";
-    if (val >= 1) return "Light";
-    return "None";
-  }
-  if (val >= 88) return "Storm Force";
-  if (val >= 62) return "Gale";
-  if (val >= 39) return "Strong";
-  if (val >= 20) return "Moderate Breeze";
-  return "Calm";
-}
+const recommendedActions: Record<AlertLevel, string> = {
+  safe: "Continue monitoring and check local advisories for updates.",
+  watch: "Stay alert, prepare essentials, and monitor local advisories.",
+  warning: "Prepare to move to safer ground if instructed by local officials.",
+  danger: "Avoid flood-prone areas and follow official emergency instructions.",
+};
 
-export default function FloodRiskCard({ level, riskScore, reasons, rainfall1h = 0, windSpeed = 0 }: FloodRiskCardProps) {
+export default function FloodRiskCard({ level, riskScore, lastUpdated }: FloodRiskCardProps) {
   const config = levelConfig[level];
+  const updatedDate = lastUpdated ? new Date(lastUpdated) : null;
+  const updatedText = updatedDate && !Number.isNaN(updatedDate.getTime())
+    ? updatedDate.toLocaleString("en-PH", {
+        timeZone: "Asia/Manila",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "Unavailable";
 
   const meterStops = [
     { id: "safe", className: "bg-safe", width: 25, active: riskScore < 20 },
@@ -95,10 +96,9 @@ export default function FloodRiskCard({ level, riskScore, reasons, rainfall1h = 
               </span>
               {config.label}
             </span>
-            <span className="glass-chip px-2.5 py-1 text-on-sky-faint font-label-sm">Cotcot River Basin #04</span>
           </div>
           <span className="font-label-sm text-label-sm text-accent-strong font-medium flex items-center gap-1">
-            <span className="material-symbols-outlined text-[16px]">sensors</span> Real-time Inundation Model
+            <span className="material-symbols-outlined text-[16px]">sensors</span> River Alert Status
           </span>
         </div>
 
@@ -112,7 +112,7 @@ export default function FloodRiskCard({ level, riskScore, reasons, rainfall1h = 
               <span className="font-title-lg text-title-lg text-on-sky-dim font-medium">/ 100</span>
               <span className={`ml-2 status-chip font-semibold uppercase tracking-wider ${config.pillBg} ${config.pillText}`}>{config.hazardLabel}</span>
             </div>
-            <p className="font-body-md text-body-md text-on-sky-dim mt-0.5">Hydrological Risk Index based on 6h telemetry accumulation</p>
+            <p className="font-body-md text-body-md text-on-sky-dim mt-0.5">Latest river-level alert and safety status</p>
           </div>
         </div>
 
@@ -146,42 +146,46 @@ export default function FloodRiskCard({ level, riskScore, reasons, rainfall1h = 
               <CloudRain className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <span className="font-label-sm text-label-sm text-on-sky-faint">Instant Rainfall</span>
+              <span className="font-label-sm text-label-sm text-on-sky-faint">Water Level</span>
               <span className="font-title-sm text-title-sm text-on-sky font-semibold tabular-nums">
-                <AnimatedNumber value={rainfall1h} decimals={1} /> mm/hr <span className="font-label-sm text-on-sky-faint font-medium">({getSeverityLabel(rainfall1h, "rain")})</span>
+                Unavailable
               </span>
+              <span className="font-label-sm text-on-sky-faint font-medium">Awaiting sensor connection</span>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-glass">
             <div className="w-10 h-10 rounded-xl bg-accent-fill text-accent-strong flex items-center justify-center">
-              <Wind className="w-5 h-5" />
+              <WavesArrowUp className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <span className="font-label-sm text-label-sm text-on-sky-faint">Wind Speed</span>
+              <span className="font-label-sm text-label-sm text-on-sky-faint">Rate of Rise</span>
               <span className="font-title-sm text-title-sm text-on-sky font-semibold tabular-nums">
-                <AnimatedNumber value={windSpeed} /> km/h <span className="font-label-sm text-accent-strong font-medium">({getSeverityLabel(windSpeed, "wind")})</span>
+                Unavailable
               </span>
+              <span className="font-label-sm text-on-sky-faint font-medium">Awaiting sensor connection</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Contributing factors */}
-      {reasons.length > 0 && (
+      {/* Recommended action */}
         <div className="pt-3 border-t border-glass-border relative z-10">
-          <span className="font-label-md text-label-md text-on-sky font-semibold tracking-wider uppercase mb-2 block">Key Contributing Factors</span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-            {reasons.map((reason, i) => (
-              <div key={i} className="flex items-center gap-2 text-on-sky-dim font-body-md text-body-md">
+          <span className="font-label-md text-label-md text-on-sky font-semibold tracking-wider uppercase mb-2 block">Recommended Action</span>
+          <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-on-sky-dim font-body-md text-body-md">
                 <span className={`w-4 h-4 rounded-full ${config.checkBg} ${config.checkColor} flex items-center justify-center shrink-0`}>
-                  <CheckCircle className="w-3 h-3" />
+                  <ShieldAlert className="w-3 h-3" aria-hidden="true" />
                 </span>
-                <span className="truncate">{reason}</span>
+                 <span>ANDAM guidance: {recommendedActions[level]}</span>
               </div>
-            ))}
+              <div className="font-label-sm text-label-sm text-on-sky-dim">
+                <span>Last updated: {updatedText} (weather assessment)</span>
+              </div>
           </div>
+          <p className="font-label-sm text-label-sm text-on-sky-dim mt-2">
+            Prototype only — this weather-based score is not a verified river alert. River-level and rate-of-rise data will be connected later.
+          </p>
         </div>
-      )}
     </div>
   );
 }

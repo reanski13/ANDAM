@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { RainfallStats, ResourceState } from "@/lib/dashboard/types";
 
 interface Reading {
   timestamp: string;
@@ -24,8 +25,8 @@ interface TrendPoint {
 }
 
 interface RainfallTrendProps {
-  cumulativeRainMm: { h6: number; h12: number; h24: number };
-  hourlySamples: number;
+  statsResource: ResourceState<RainfallStats>;
+  refreshSignal?: number;
 }
 
 interface RainTooltipProps {
@@ -66,7 +67,7 @@ function CumulativeStat({ label, value, available }: { label: string; value: num
   );
 }
 
-export default function RainfallTrend({ cumulativeRainMm, hourlySamples }: RainfallTrendProps) {
+export default function RainfallTrend({ statsResource, refreshSignal = 0 }: RainfallTrendProps) {
   const [points, setPoints] = useState<TrendPoint[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reduce = useReducedMotion();
@@ -104,11 +105,14 @@ export default function RainfallTrend({ cumulativeRainMm, hourlySamples }: Rainf
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [refreshSignal]);
+
+  const stats = statsResource.status === "ready" ? statsResource.data : null;
+  const cumulativeRainMm = stats?.cumulativeRainMm ?? { h6: 0, h12: 0, h24: 0 };
+  const hasRollups = (stats?.hourlySamples ?? 0) > 0;
 
   const hasData = points !== null && points.length > 0;
   const peak = hasData ? Math.max(...points.map((point) => point.rain)) : 0;
-  const hasRollups = hourlySamples > 0;
 
   return (
     <div className="glass-card p-5">

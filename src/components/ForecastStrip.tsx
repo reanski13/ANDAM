@@ -4,18 +4,13 @@ import { motion } from "motion/react";
 import { CloudOff } from "lucide-react";
 import { WeatherIcon } from "@/lib/weather-icon";
 import { EASE } from "@/lib/motion-tokens";
-
-export interface ForecastHour {
-  timestamp: number;
-  temperature: number;
-  pop: number;
-  rainMm: number;
-  condition: string;
-  icon: string;
-}
+import ResourceUnavailable from "@/components/dashboard/ResourceUnavailable";
+import { Skeleton } from "@/components/dashboard/Skeleton";
+import type { ForecastResource, ResourceState } from "@/lib/dashboard/types";
 
 interface ForecastStripProps {
-  forecast: ForecastHour[];
+  resource: ResourceState<ForecastResource>;
+  onRetry: () => void;
 }
 
 function getRainBarHeight(prob: number): string {
@@ -30,7 +25,55 @@ function formatHour(timestamp: number, isFirst: boolean): string {
   });
 }
 
-export default function ForecastStrip({ forecast }: ForecastStripProps) {
+function ForecastHeader() {
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      <div className="w-9 h-9 rounded-xl bg-accent-fill text-accent-strong flex items-center justify-center">
+        <span className="material-symbols-outlined text-[20px]">timelapse</span>
+      </div>
+      <div>
+        <h2 className="font-title-lg text-title-lg text-on-sky font-semibold">24-Hour Weather Forecast</h2>
+        <p className="font-label-sm text-label-sm text-on-sky-faint">3-hour intervals from OpenWeatherMap over Brgy. Cotcot</p>
+      </div>
+    </div>
+  );
+}
+
+function ForecastSkeleton() {
+  return (
+    <div className="glass-card p-5" aria-hidden="true">
+      <div className="flex items-center gap-3 mb-3">
+        <Skeleton className="h-9 w-9 rounded-xl" />
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-3.5 w-64" />
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1 pb-1 overflow-hidden">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <Skeleton key={index} className="h-[150px] min-w-[86px] rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ForecastStrip({ resource, onRetry }: ForecastStripProps) {
+  if (resource.status === "loading") {
+    return <ForecastSkeleton />;
+  }
+
+  if (resource.status === "unavailable") {
+    return (
+      <div className="glass-card p-5">
+        <ForecastHeader />
+        <ResourceUnavailable icon="cloud_off" message={resource.message} onRetry={onRetry} />
+      </div>
+    );
+  }
+
+  const forecast = resource.data.forecast;
+
   if (forecast.length === 0) {
     return (
       <div className="glass-card p-8 text-center">
@@ -47,15 +90,7 @@ export default function ForecastStrip({ forecast }: ForecastStripProps) {
 
   return (
     <div className="glass-card p-5">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-xl bg-accent-fill text-accent-strong flex items-center justify-center">
-          <span className="material-symbols-outlined text-[20px]">timelapse</span>
-        </div>
-        <div>
-          <h2 className="font-title-lg text-title-lg text-on-sky font-semibold">24-Hour Weather Forecast</h2>
-          <p className="font-label-sm text-label-sm text-on-sky-faint">3-hour intervals from OpenWeatherMap over Brgy. Cotcot</p>
-        </div>
-      </div>
+      <ForecastHeader />
 
       {/* iOS-style hourly strip */}
       <div className="snap-x-strip scrollbar-hide pt-1 pb-1">

@@ -1,18 +1,12 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { Skeleton } from "@/components/dashboard/Skeleton";
+import type { PagasaResource, ResourceState } from "@/lib/dashboard/types";
 
 interface PagasaInfoProps {
-  synopsis: string;
-  issuedAt: string | null;
-  fetchedAt: string;
-  advisoryStatus?: "ok" | "unavailable";
-  forecast: Array<{
-    place: string;
-    condition: string;
-    causedBy: string;
-    impacts: string;
-  }>;
+  resource: ResourceState<PagasaResource>;
+  onRetry: () => void;
 }
 
 function formatIssued(issuedAt: string): string {
@@ -30,15 +24,39 @@ function formatFetched(fetchedAt: string): string {
   });
 }
 
-export default function PagasaInfo({
-  synopsis,
-  issuedAt,
-  fetchedAt,
-  advisoryStatus = "ok",
-  forecast,
-}: PagasaInfoProps) {
+function PagasaHeader() {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <div className="w-9 h-9 shrink-0 rounded-xl bg-accent-fill text-accent-strong flex items-center justify-center">
+        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">cloud_sync</span>
+      </div>
+      <div>
+        <h3 className="font-title-lg text-title-lg text-on-sky font-semibold">PAGASA Regional Weather Advisory</h3>
+        <span className="font-label-sm text-label-sm text-accent-strong font-medium">Visayas PRSD &bull; Cebu Station Sync</span>
+      </div>
+    </div>
+  );
+}
+
+function PagasaSkeleton() {
+  return (
+    <div aria-hidden="true">
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <div className="flex flex-col gap-3 mt-4">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <Skeleton key={index} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function PagasaInfo({ resource, onRetry }: PagasaInfoProps) {
+  const data = resource.status === "ready" ? resource.data : null;
+  const forecast = data?.forecast ?? [];
+  const synopsis = data?.synopsis ?? "";
   const hasFloodWarning =
-    advisoryStatus === "ok" &&
+    resource.status === "ready" &&
     forecast.some((item) => /flash flood|landslide/i.test(item.impacts || ""));
 
   return (
@@ -53,40 +71,41 @@ export default function PagasaInfo({
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-9 h-9 shrink-0 rounded-xl bg-accent-fill text-accent-strong flex items-center justify-center">
-            <span className="material-symbols-outlined text-[20px]" aria-hidden="true">cloud_sync</span>
-          </div>
-          <div>
-            <h3 className="font-title-lg text-title-lg text-on-sky font-semibold">PAGASA Regional Weather Advisory</h3>
-            <span className="font-label-sm text-label-sm text-accent-strong font-medium">Visayas PRSD &bull; Cebu Station Sync</span>
-          </div>
-        </div>
+        <PagasaHeader />
 
-        {advisoryStatus === "unavailable" ? (
-          <div role="status" className="bg-glass rounded-2xl p-4 flex items-start gap-2.5 mt-2">
-            <span
-              className="material-symbols-outlined text-[18px] shrink-0 text-on-sky-faint"
-              aria-hidden="true"
-            >
-              cloud_off
-            </span>
-            <p className="font-body-md text-body-md text-on-sky-dim leading-snug">
-              PAGASA advisory is temporarily unavailable. Try again shortly.
-            </p>
+        {resource.status === "loading" && <PagasaSkeleton />}
+
+        {resource.status === "unavailable" && (
+          <div role="status" className="bg-glass rounded-2xl p-4 flex flex-col items-start gap-3 mt-2">
+            <div className="flex items-start gap-2.5">
+              <span
+                className="material-symbols-outlined text-[18px] shrink-0 text-on-sky-faint"
+                aria-hidden="true"
+              >
+                cloud_off
+              </span>
+              <p className="font-body-md text-body-md text-on-sky-dim leading-snug">
+                PAGASA advisory is temporarily unavailable. Try again shortly.
+              </p>
+            </div>
+            <button type="button" onClick={onRetry} className="glass-btn">
+              Retry
+            </button>
           </div>
-        ) : (
+        )}
+
+        {resource.status === "ready" && (
           <>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-sm text-label-sm text-on-sky-faint mb-2">
-              {issuedAt && (
+              {data?.issuedAt && (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[15px]" aria-hidden="true">calendar_today</span>
-                  <span className="font-semibold text-on-sky-dim">Issued: {formatIssued(issuedAt)}</span>
+                  <span className="font-semibold text-on-sky-dim">Issued: {formatIssued(data.issuedAt)}</span>
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[15px]" aria-hidden="true">schedule</span>
-                Fetched: {formatFetched(fetchedAt)}
+                Fetched: {formatFetched(resource.fetchedAt)}
               </span>
             </div>
 
