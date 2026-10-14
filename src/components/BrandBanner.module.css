@@ -1,0 +1,40 @@
+/* ─────────────────────────────────────────────
+   Brand banner — the wide ANDAM lockup.
+   Rendered directly (no tile); sized as large as
+   each context allows.
+   ───────────────────────────────────────────── */
+
+.banner {
+  display: block;
+}
+
+/* In the top bar — grows across breakpoints (3:1, so width follows). */
+.bar {
+  height: 2.25rem; /* 36px */
+  width: auto;
+}
+
+@media (min-width: 480px) {
+  .bar {
+    height: 3rem; /* 48px */
+  }
+}
+
+@media (min-width: 768px) {
+  .bar {
+    height: 3.75rem; /* 60px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .bar {
+    height: 4.25rem; /* 68px */
+  }
+}
+
+/* Standalone (login card) — fills the card width up to 432px, then stops. */
+.hero {
+  width: 100%;
+  max-width: 27rem; /* 432px */
+  height: auto;
+}

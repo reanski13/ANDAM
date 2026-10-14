@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Map as MapIcon, Siren, BarChart3 } from "lucide-react";
+import BrandBanner from "./BrandBanner";
 import styles from "./TopTabBar.module.css";
 
 const useIsomorphicLayoutEffect =
@@ -22,26 +22,6 @@ const NAV_ITEMS = [
 // the whole Officials flow instead of freezing on the previous tab.
 const getActiveKey = (path: string) =>
   path === "/admin" || path.startsWith("/admin/") ? "/admin" : path;
-
-function BrandMark() {
-  return (
-    <div className={styles.brandMark}>
-      <div className={styles.brandIcon}>
-        <Image
-          src="/icon-192.png"
-          alt="ANDAM logo"
-          width={36}
-          height={36}
-          className={styles.brandLogo}
-        />
-      </div>
-      <div className={styles.brandText}>
-        <div className={styles.brandTitle}>ANDAM</div>
-        <div className={styles.brandSub}>Para sa Kaugmaon</div>
-      </div>
-    </div>
-  );
-}
 
 // This component now mounts once, in the root layout, and stays alive across
 // every route change. `pathname` just changes on an already-mounted element,
@@ -133,47 +113,41 @@ export default function TopTabBar() {
   }, [measure, activeKey]);
 
   return (
-    <>
-      <div ref={barRef} className={styles.bar} data-scrolled={scrolled || undefined}>
-        <div className={styles.inner}>
-          <div className={styles.brand}>
-            <BrandMark />
-          </div>
+    <div ref={barRef} className={styles.bar} data-scrolled={scrolled || undefined}>
+      <div className={styles.inner}>
+        <div className={styles.brand}>
+          <BrandBanner />
+        </div>
 
-          <nav ref={containerRef} aria-label="Primary" className={styles.nav}>
-            <span ref={pillRef} className={styles.pill} aria-hidden="true" />
-            {NAV_ITEMS.map((item) => {
-              const isActive = activeKey === item.key;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  ref={(el) => {
-                    buttonRefs.current[item.key] = el;
-                  }}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`${styles.tab} ${isActive ? styles.active : ""}`}
-                  onClick={() => router.push(item.key)}
-                >
-                  <span className={styles.icon}>{item.icon}</span>
-                  <span className={styles.label}>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+        <nav ref={containerRef} aria-label="Primary" className={styles.nav}>
+          <span ref={pillRef} className={styles.pill} aria-hidden="true" />
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeKey === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                ref={(el) => {
+                  buttonRefs.current[item.key] = el;
+                }}
+                aria-current={isActive ? "page" : undefined}
+                className={`${styles.tab} ${isActive ? styles.active : ""}`}
+                onClick={() => router.push(item.key)}
+              >
+                <span className={styles.icon}>{item.icon}</span>
+                <span className={styles.label}>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-          <div className={styles.status}>
-            <span className={styles.statusChip}>
-              <span className={styles.statusDot} />
-              Monitored
-            </span>
-          </div>
+        <div className={styles.status}>
+          <span className={styles.statusChip}>
+            <span className={styles.statusDot} />
+            Monitored
+          </span>
         </div>
       </div>
-
-      <div className={styles.mobileBrand}>
-        <BrandMark />
-      </div>
-    </>
+    </div>
   );
 }

@@ -53,84 +53,12 @@
   gap: 0.75rem;
 }
 
-/* ── Brand block (in the bar on desktop only) ── */
+/* ── Brand lockup (in the bar at every width) ── */
 
 .brand {
   display: flex;
   align-items: center;
-  min-width: 0;
-  flex-shrink: 1;
-}
-
-/* On mobile/tablet the brand lives in its own strip below the bar. */
-@media (max-width: 1023.98px) {
-  .brand {
-    display: none;
-  }
-}
-
-.brandMark {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  min-width: 0;
-}
-
-.brandIcon {
   flex-shrink: 0;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.75rem;
-  background: var(--glass-card);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-}
-
-.brandLogo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 4px;
-}
-
-.brandText {
-  line-height: 1.25;
-  min-width: 0;
-}
-
-.brandTitle {
-  color: var(--on-sky);
-  font-weight: 600;
-  font-size: 0.875rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.brandSub {
-  color: var(--on-sky-faint);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Mobile / tablet brand strip (below the floating bar, above the page) ──
-   Sits in normal flow so it scrolls away; only the bar stays on top. */
-
-.mobileBrand {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem 0.125rem;
-}
-
-@media (min-width: 1024px) {
-  .mobileBrand {
-    display: none;
-  }
 }
 
 /* ── Navigation shell ── */
@@ -259,7 +187,7 @@
   display: none;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
   .label {
     display: inline;
   }
