@@ -32,6 +32,7 @@ yarn-error.log*
 /dev-server.log
 /start.err.log
 /start.out.log
+/.tmp-*.log
 
 # local visual QA artifacts
 /.playwright-mcp/

@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Project context — Cotcot Flood Alert
+# Project context — ANDAM
 
 Community flood early-warning + officials command center for Barangay Cotcot, Liloan, Cebu. Next.js 16 App Router, React 19, Tailwind v4, Framer Motion (`motion`), Supabase, Leaflet.
 
@@ -16,14 +16,15 @@ Read these before editing anything:
 1. `PROJECT_OVERVIEW.md` — architecture, routes, data flow, auth, env vars, gotchas.
 2. `DESIGN.md` — the design system (sky/glass/tokens/motion). New UI must follow it.
 
-`README.md` and `UI_STRUCTURE.md` are outdated — trust `PROJECT_OVERVIEW.md` + `DESIGN.md`.
+`PROJECT_OVERVIEW.md` and `DESIGN.md` are the engineering sources of truth.
+`UI_STRUCTURE.md` is a legacy design archive and must not guide implementation.
 
 After changes: `npm run lint` (baseline: 2 pre-existing font warnings in `src/app/layout.tsx`) and `npm run build`. Never commit or print secrets from `.env.local`.
 
 # Git workflow (branch per feature)
 
 Every new feature or task gets its own branch off `main`, with a descriptive
-name (e.g. `frontend/evacuation-ui`, `s7-telemetry-pipeline`). Work, test, and
-lint/build on that branch. Only after it is verified and the user approves do
-you: merge into `main` → commit → push. `main` stays always-deployable; never
-commit directly to `main` for feature work.
+name (e.g. `frontend/evacuation-ui`, `s7-telemetry-pipeline`). Work, test,
+commit, and push the branch. Merge into `main` only after verification and user
+approval. `main` stays always-deployable; never commit directly to `main` for
+feature work.

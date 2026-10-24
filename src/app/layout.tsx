@@ -44,7 +44,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function () {
               try {
-                var t = localStorage.getItem("cotcot-theme");
+                var t = localStorage.getItem("andam-theme");
+                if (t !== "light" && t !== "dark") {
+                  t = localStorage.getItem("cotcot-theme");
+                  if (t === "light" || t === "dark") {
+                    localStorage.setItem("andam-theme", t);
+                  }
+                }
                 if (t !== "light" && t !== "dark") {
                   t = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
                 }

@@ -1,12 +1,12 @@
 -- ═════════════════════════════════════════════════════════════════════
--- Cotcot Flood Alert - Officials access setup
+-- ANDAM - Officials access setup
 -- Run once in the Supabase SQL Editor AFTER enabling Email/Password and
 -- creating the official account(s) under Authentication > Users (Add user).
 -- The app only renders the Officials Dashboard when
 -- auth.users.raw_app_meta_data.is_official = true.
 -- ═════════════════════════════════════════════════════════════════════
 
--- 1) Grant officials access (replace emails with the accounts you created)
+-- 1) Grant officials access. Replace the example emails with accounts you created.
 update auth.users
 set raw_app_meta_data = jsonb_set(
   coalesce(raw_app_meta_data, '{}'::jsonb),

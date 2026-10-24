@@ -1,107 +1,150 @@
-# Cotcot Flood Alert 🌊
+# ANDAM
 
-Real-time flood early-warning and emergency-response system for **Barangay Cotcot, Liloan, Cebu, Philippines**.
+ANDAM, from the Bisaya word for "ready," is a flood monitoring and disaster risk reduction platform for Barangay Cotcot, Liloan, Cebu, Philippines. It helps residents and local officials review live weather, PAGASA advisories, evacuation information, and a weather-based flood-risk prototype.
 
-A mobile-first web app for residents and village officials: live weather conditions, an automated flood-risk assessment, PAGASA-backed advisories, an interactive flood/GIS map, an evacuation-center directory with one-tap emergency hotlines, and a officials-only command dashboard.
+> This community pilot supports preparedness. It does not replace official warnings from PAGASA, Liloan DRRMO, NDRRMC, or emergency services. In an emergency, call 911.
 
-## Features
+## What Is Included
 
-- **Live weather dashboard** — temperature, humidity, wind, barometric pressure, rainfall, visibility from OpenWeatherMap, merged with PAGASA Visayas advisories.
-- **Automated flood-risk scoring** — weighted `safe / watch / warning / danger` assessment from rainfall intensity, cumulative rain, wind speed, and humidity (`src/lib/alerts.ts`).
-- **Interactive flood map** — Leaflet + OpenStreetMap with flood hazard zones, simulated river-gauge sensors, and evacuation-center markers with toggleable layers.
-- **Evacuation & safety hub** — designated shelters with capacity/amenities/elevation, a Before/During/After flood safety guide, and direct `tel:` hotlines (DRRMO, BFP, Red Cross, 911).
-- **Officials dashboard** (`/admin`) — Supabase-secured command center with DRRMO modules (some marked *Coming Soon*: weather history, flood analytics/ML, SMS & push broadcast, citizen reports). Access requires an accredited-official account.
-- **iOS-style "Smart Sky" design** — continuous sky gradient, frosted glass, light/dark theme, subtle Framer Motion animations that respect `prefers-reduced-motion`.
-- **PWA-ready** manifest (add real icons before treating installability as a feature).
+- Live OpenWeather conditions and a 24-hour forecast in 3-hour intervals.
+- PAGASA Visayas advisory scraping with a source-specific fallback state.
+- A weather-based `safe` / `watch` / `warning` / `danger` assessment. It is not verified river telemetry.
+- Interactive flood map, evacuation directory, safety guidance, and officials dashboard.
+- Supabase-backed weather history and hourly rainfall rollups.
+- A non-blocking dashboard: each data source loads, refreshes, and fails independently.
 
-## Pages
+## Requirements
 
-| Route | Description |
-| --- | --- |
-| `/` | Dashboard — live weather, flood risk, forecast, PAGASA, emergency contacts |
-| `/map` | Interactive flood-risk & GIS evacuation map |
-| `/evacuation` | Evacuation centers, dispatch hotlines, flood safety guide |
-| `/admin` | Officials command dashboard (guarded) |
-| `/admin/login` | Officials sign-in + access request |
+- Node.js 20 or later.
+- npm.
+- An OpenWeatherMap API key.
+- A Supabase project for auth and weather history.
+- Optional for scheduled ingestion: a Vercel project or another scheduler.
 
-## Tech stack
+## Clone And Run
 
-- **Next.js 16** (App Router, Turbopack), **React 19**, **TypeScript**, **Tailwind CSS v4**
-- **Framer Motion** (`motion`) for UI animation
-- **Leaflet** + OpenStreetMap for the flood map
-- **Supabase** (SSR auth + Postgres) for officials access and telemetry history
-- **cheerio** for PAGASA bulletins; **OpenWeatherMap** for live conditions
-
-## Getting started
-
-Prerequisites: Node 20+ and an npm-compatible package manager.
+Clone the default `main` branch into a new directory. The cloned directory itself is the application root.
 
 ```bash
-npm install
-cp .env.local.example .env.local   # then fill in your keys
+git clone --branch main --single-branch https://github.com/reanski13/ANDAM.git
+cd ANDAM
+npm ci
+```
+
+Create your local environment file from the committed template.
+
+```bash
+cp .env.local.example .env.local
+```
+
+On Windows PowerShell, use:
+
+```powershell
+Copy-Item .env.local.example .env.local
+```
+
+Fill `.env.local` with your own values. Never commit it or paste values into issues, pull requests, or chat.
+
+```env
+OPENWEATHER_API_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
+```
+
+Start the app:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open `http://localhost:3000`.
 
-### Environment variables
+## Environment Variables
 
-| Variable | Required | Purpose |
+| Variable | Required for | Notes |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | for auth/history | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | for auth/history | Supabase anon key |
-| `OPENWEATHER_API_KEY` | for live weather | OpenWeatherMap API key |
-| `CRON_SECRET` | for scheduled fetch | Bearer token for `/api/cron/fetch-weather` |
+| `OPENWEATHER_API_KEY` | Current weather, forecast, weather-based assessment | Server-only |
+| `NEXT_PUBLIC_SUPABASE_URL` | Auth and weather-history reads | Public project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth and weather-history reads | Public anon/publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Scheduled ingestion and hourly rollups | Server-only. Never expose it to the browser. |
+| `CRON_SECRET` | `/api/cron/fetch-weather` authorization | Server-only bearer secret |
 
-### Setting up Officials access (Supabase)
+## Supabase Setup
 
-1. In Supabase: enable **Email/Password** auth and create official accounts (Authentication → Users → Add user).
-2. Run `supabase/auth-setup.sql` in the SQL editor — it marks the listed accounts as `is_official = true` and sets their display name/role.
-3. Sign in at `/admin/login`. Non-officials can send an access request that opens a pre-filled email to `drrmo@liloan.gov.ph`.
+The schema is versioned in `supabase/migrations/`.
 
-### Scheduled telemetry ingestion
+### Hosted Supabase
 
-Point a cron job (e.g. Vercel Cron) at `/api/cron/fetch-weather` with header `Authorization: Bearer <CRON_SECRET>`. It curates conditions into the `weather_readings` table, readable via `/api/weather/history`.
+1. Create or select a Supabase project.
+2. Set the URL, anon key, and service-role key in `.env.local` and your deployment environment.
+3. Authenticate the CLI and link the project:
 
-## Scripts
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref YOUR_PROJECT_REF
+   npx supabase db push
+   ```
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm run start` | Serve production build |
-| `npm run lint` | ESLint |
+4. Enable Email/Password auth and create official accounts in Supabase Authentication.
+5. Use `supabase/auth-setup.sql` as a template: replace its example emails with real accounts, then run it in the Supabase SQL editor.
 
-## Design
+### Local Supabase
 
-The UI follows a "Smart Sky" design system — one continuous sky gradient, frosted-glass surfaces, and a sliding iOS-style tab bar. Full tokens, rules, and motion guidance live in **`DESIGN.md`**. Architecture and conventions live in **`PROJECT_OVERVIEW.md`** (the source of truth for developers).
+With Docker and the Supabase CLI installed:
 
-## Project structure (highlights)
-
-```
-src/
-  app/                 layout, pages, and API routes
-  components/          UI components (incl. motion/ primitives)
-  lib/                 weather, PAGASA scraper, flood risk, sky theme, Supabase
-supabase/auth-setup.sql
-DESIGN.md              design system
-PROJECT_OVERVIEW.md    architecture & conventions
+```bash
+npx supabase start
+npx supabase db reset
 ```
 
-## Status & roadmap
+The committed migrations create the local schema. No seed file is required.
 
-Pre-alpha pilot. The public-facing UI is complete; some data paths need live keys; the admin's core modules are implemented as a roadmap:
+## Data Flow
 
-- [ ] Weather History & Precipitation Logs
-- [ ] Flood Analytics & ML forecast
-- [ ] Emergency Broadcast & SMS/push subscriptions
-- [ ] Citizen crowdsource & field reports
-- [ ] Real PWA icons
+The dashboard renders its structure immediately, then the browser independently requests:
 
-## Disclaimer
+```text
+/api/weather/current   OpenWeather current observation
+/api/weather/risk      weather-based assessment + stored rainfall rollups
+/api/weather/forecast  OpenWeather forecast
+/api/weather/pagasa    PAGASA Visayas advisory scrape
+/api/weather/history   Supabase weather-reading history
+```
 
-This is a community pilot tool and does **not** replace official warnings from PAGASA, the Liloan DRRMO, or the NDRRMC. In an emergency, call **911**.
+Live weather and forecasts do not require Supabase. Rainfall Trend requires stored readings. The River Alert Status card remains a prototype: its water-level and rate-of-rise values stay unavailable until real sensors are connected.
 
-## License
+## Scheduled Ingestion
 
-Currently unlicensed (internal/local-government pilot). Rebrand and choose a license before public distribution.
+`vercel.json` schedules `GET /api/cron/fetch-weather` daily at `08:00 UTC` (about `16:00` in the Philippines).
+
+The endpoint requires:
+
+```text
+Authorization: Bearer <CRON_SECRET>
+```
+
+It fetches current OpenWeather and PAGASA data, writes readings to Supabase, and updates hourly rollups. Vercel Cron uses the `CRON_SECRET` configured for the project. Another scheduler must send the authorization header itself.
+
+The current daily schedule creates sparse rainfall history. Choose a more frequent schedule only after confirming your Vercel plan and data-retention needs.
+
+## Quality Checks
+
+```bash
+npm run lint
+npm run build
+```
+
+The current lint baseline has two Next.js font warnings in `src/app/layout.tsx`; there should be no lint errors.
+
+## Project Status
+
+- Live provider availability depends on configured credentials and upstream services.
+- Map river sensors are simulated; River Alert is a weather-based prototype.
+- Several Officials dashboard modules are intentionally marked Coming Soon.
+- The manifest icons are present, but the project does not yet ship a service worker, so it is not an offline PWA.
+
+## Contributing And Security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and [SECURITY.md](SECURITY.md) for responsible reporting. The project is currently unlicensed; do not assume reuse rights.

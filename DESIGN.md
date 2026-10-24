@@ -1,4 +1,4 @@
-# Cotcot Flood Alert — "Smart Sky" Design System
+# ANDAM — "Smart Sky" Design System
 
 UI redesign: iOS Weather-inspired. One continuous sky gradient, frosted-glass cards, a top iOS-style tab bar. Light + dark appearances. UI only — no feature changes.
 
@@ -26,7 +26,8 @@ Fallback when no condition attribute: default "stable blue" stops at `:root`.
 
 ## Theme switching
 
-- `localStorage` key: `cotcot-theme` (`"dark"` or `"light"`).
+- `localStorage` key: `andam-theme` (`"dark"` or `"light"`). Existing
+  `cotcot-theme` preferences are migrated on first load.
 - An inline script in `src/app/layout.tsx` sets `data-theme` **before first paint** (no flash of wrong theme).
 - The header's Sun/Moon toggle flips it and persists; preference falls back to `prefers-color-scheme` on first visit.
 - Dark is the default.
