@@ -26,7 +26,7 @@ export async function scrapePagasaVisayas(): Promise<PagasaWeatherData> {
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "CotcotFloodAlert/1.0 (Community Weather Monitoring)",
+        "User-Agent": "ANDAM/1.0 (Community Weather Monitoring)",
       },
       signal: AbortSignal.timeout(8000),
     });
@@ -135,7 +135,7 @@ export async function scrapePagasaWarnings(): Promise<string[]> {
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "CotcotFloodAlert/1.0 (Community Weather Monitoring)",
+        "User-Agent": "ANDAM/1.0 (Community Weather Monitoring)",
       },
     });
 

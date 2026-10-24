@@ -31,7 +31,7 @@ export default function DashboardHeader({ lastUpdated, onRefresh, loading = fals
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
     try {
-      localStorage.setItem("cotcot-theme", next);
+      localStorage.setItem("andam-theme", next);
     } catch {
       /* ignore */
     }

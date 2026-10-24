@@ -1,12 +1,16 @@
 > **⚠️ SUPERSEDED** — This document describes the ORIGINAL pre-redesign UI (sidebar navigation, teal palette, placeholder map/admin) and is **out of date**. Kept for reference only. The source of truth is now `PROJECT_OVERVIEW.md` (architecture & conventions) and `DESIGN.md` (design system). Do not use this file to plan or build UI.
 
-# Cotcot Flood Alert — UI Structure & Handoff Spec
+# ANDAM — Legacy UI Structure Archive
+
+> **Archived reference only.** This document describes the pre-Smart-Sky sidebar
+> interface and does not match the current application. Use `README.md`,
+> `PROJECT_OVERVIEW.md`, and `DESIGN.md` for current setup, architecture, and UI guidance.
 
 ## Overview
 
-This document provides a complete UI/UX specification for the Cotcot Flood Alert webapp. It is intended as a handoff reference for redesign in Google Stitch or any other design tool.
+This historical document provides the pre-ANDAM UI/UX specification for the former Cotcot Flood Alert webapp. It is retained only as a handoff reference for Google Stitch or other design tools.
 
-**App Name:** Cotcot Flood Alert
+**Historical App Name:** Cotcot Flood Alert
 **Target:** Barangay Cotcot, Liloan, Cebu, Philippines
 **Stack:** Next.js 16 + TypeScript + Tailwind CSS v4 + lucide-react icons
 **Mobile-first:** Yes — primary audience is barangay residents on mobile devices

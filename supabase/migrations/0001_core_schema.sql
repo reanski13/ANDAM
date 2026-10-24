@@ -1,6 +1,6 @@
 -- ═════════════════════════════════════════════════════════════════════
 -- 0001_core_schema.sql
--- Cotcot Flood Alert / ANDAM — core schema
+-- ANDAM — core schema
 --
 -- Tables, indexes, and Row Level Security.
 --
