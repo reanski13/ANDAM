@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Map as MapIcon, Siren, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Camera, Siren, BarChart3 } from "lucide-react";
 import BrandBanner from "./BrandBanner";
 import styles from "./TopTabBar.module.css";
 
@@ -11,7 +11,7 @@ const useIsomorphicLayoutEffect =
 
 const NAV_ITEMS = [
   { key: "/", label: "Dashboard", icon: <LayoutDashboard /> },
-  { key: "/map", label: "Flood Map", icon: <MapIcon /> },
+  { key: "/map", label: "Surveillance", icon: <Camera /> },
   { key: "/evacuation", label: "Evacuation", icon: <Siren /> },
   { key: "/admin", label: "Officials", icon: <BarChart3 /> },
 ];

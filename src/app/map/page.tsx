@@ -1,569 +1,232 @@
 "use client";
 
-import { useState, useEffect, useRef, ViewTransition } from "react";
-import type { Map as LeafletMap, LayerGroup } from "leaflet";
+import { useCallback, useEffect, useRef, useState, ViewTransition } from "react";
+import type { CircleMarker, Map as LeafletMap } from "leaflet";
+import { Camera, CameraOff, ChevronRight, MapPin, Radio, ShieldCheck } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
+import FloodRiskSection from "@/components/dashboard/FloodRiskSection";
 import Reveal from "@/components/motion/Reveal";
-import { EVACUATION_CENTERS, COTCOT, WEBER_HOTEL_DIRECTIONS_URL } from "@/lib/constants";
-import type { MapCenter, HazardZone, RiverSensor, FloodIncidentSummary } from "@/lib/db/reference";
+import { useDashboardResource } from "@/lib/hooks/useDashboardResource";
+import type { RiskResource } from "@/lib/dashboard/types";
 
-const WEBER_HOTEL = EVACUATION_CENTERS.find((c) => c.name === "Weber Hotel");
-
-type MapWithLayers = LeafletMap & {
-  _hazardGroup?: LayerGroup;
-  _sensorGroup?: LayerGroup;
-  _centerGroup?: LayerGroup;
-  _incidentGroup?: LayerGroup;
+type Station = {
+  id: "cotcot-bridge" | "mulao-bridge";
+  name: string;
+  location: string;
+  coordinates: [number, number];
+  note: string;
 };
 
-interface MapPageData {
-  centers: MapCenter[];
-  zones: HazardZone[];
-  sensors: RiverSensor[];
-  incidents: FloodIncidentSummary[];
-}
-
-const ZONE_STYLES: Record<string, { color: string; fillOpacity: number; weight: number; dashArray: string }> = {
-  critical: { color: "#7f1d1d", fillOpacity: 0.2, weight: 2.5, dashArray: "7 5" },
-  high: { color: "#ba1a1a", fillOpacity: 0.15, weight: 2, dashArray: "6 4" },
-  moderate: { color: "#ea580c", fillOpacity: 0.12, weight: 1.5, dashArray: "4 4" },
-  low: { color: "#eab308", fillOpacity: 0.1, weight: 1, dashArray: "3 3" },
-};
-
-const INCIDENT_COLORS: Record<string, string> = {
-  critical: "#7f1d1d",
-  high: "#dc2626",
-  moderate: "#ea580c",
-  low: "#eab308",
-};
-
-const FALLBACK_SENSORS: RiverSensor[] = [
+const STATIONS: Station[] = [
   {
-    id: "fallback-stn-01",
-    stationId: "Stn-01",
-    name: "Cotcot Bridge",
-    purok: null,
-    lat: 10.426,
-    lon: 124.001,
-    normalLevelM: 2.5,
-    warningLevelM: null,
-    dangerLevelM: null,
-    status: "normal",
-    dataSource: "simulated",
-    isSimulated: true,
-    latest: { timestamp: "", waterLevelM: 1.85, flowCms: 14.2, batteryPct: null },
+    id: "cotcot-bridge",
+    name: "Cotcot River Bridge",
+    location: "Near Welcome to Compostela sign",
+    coordinates: [10.430223653221535, 124.00315014253883],
+    note: "Camera source authorization is pending.",
   },
   {
-    id: "fallback-stn-02",
-    stationId: "Stn-02",
-    name: "Masagana Creek",
-    purok: null,
-    lat: 10.429,
-    lon: 124.0035,
-    normalLevelM: 1.6,
-    warningLevelM: null,
-    dangerLevelM: null,
-    status: "alert",
-    dataSource: "simulated",
-    isSimulated: true,
-    latest: { timestamp: "", waterLevelM: 1.2, flowCms: 8.7, batteryPct: null },
+    id: "mulao-bridge",
+    name: "Mulao Bridge",
+    location: "Mulao, Liloan",
+    coordinates: [10.476531365364663, 123.94633531592825],
+    note: "Camera source authorization is pending.",
   },
 ];
-
-const FALLBACK_CENTERS: MapCenter[] = EVACUATION_CENTERS.map((center) => {
-  const meta: Record<string, { sector?: string; role?: string; verified?: boolean; dataSource?: string; notes?: string }> = {
-    "Tiltilon Elementary School": {
-      sector: "Cotcot",
-      role: "Designated EC - School",
-      verified: true,
-      dataSource: "PNA / DSWD DROMIC",
-      notes: "Housed 509 IDPs during Typhoon Tino (Nov 2025).",
-    },
-    "Liloan Central School": {
-      sector: "Poblacion",
-      role: "Designated EC - School",
-      verified: true,
-      dataSource: "CDN Digital / DSWD DROMIC",
-      notes: "137 Cotcot River residents relocated here, 24 Nov 2025.",
-    },
-    "Panphil B. Francisco Gymnasium": {
-      sector: "Poblacion",
-      role: "Designated EC - Gymnasium / Relief Hub",
-      verified: true,
-      dataSource: "DSWD DROMIC",
-      notes: "618 IDPs sheltered during Tino. Approximate location.",
-    },
-    "Weber Hotel": {
-      sector: "Poblacion",
-      role: "Emergency Overflow Shelter - Private",
-      verified: true,
-      dataSource: "DSWD DROMIC",
-      notes: "Overflow shelter (private).",
-    },
-    "Yati Elementary School": {
-      sector: "Yati",
-      role: "Designated EC - School",
-      verified: true,
-      dataSource: "CDN Digital",
-      notes: "Active EC, 24 Nov 2025.",
-    },
-    "Calero Integrated School": {
-      sector: "Calero",
-      role: "Designated EC - School",
-      verified: true,
-      dataSource: "CDN Digital",
-      notes: "Active EC, 24 Nov 2025.",
-    },
-  };
-  const m = meta[center.name] ?? {};
-  return {
-    id: `fallback-${center.name.split(" ").join("-").toLowerCase()}`,
-    name: center.name,
-    address: center.address,
-    purok: null,
-    lat: center.lat,
-    lon: center.lon,
-    capacity: null,
-    role: m.role ?? null,
-    sector: m.sector ?? "",
-    elevationM: null,
-    elevationLabel: null,
-    imageQuery: null,
-    amenities: [],
-    contact: null,
-    verified: m.verified ?? false,
-    dataSource: m.dataSource ?? null,
-    notes: m.notes ?? null,
-  };
-});
-
-const FALLBACK_ZONES: HazardZone[] = [
-  { id: "fallback-zone-1", name: "Cotcot River Lowland", severity: "high", radiusM: 300, lat: 10.4245, lon: 124.0005, description: null },
-  { id: "fallback-zone-2", name: "Cotcot River - Masagana Creek Confluence", severity: "high", radiusM: 300, lat: 10.4275, lon: 124.0025, description: null },
-  { id: "fallback-zone-3", name: "Masagana Creek Corridor", severity: "moderate", radiusM: 250, lat: 10.43, lon: 124.004, description: null },
-  { id: "fallback-zone-4", name: "Inland Low-lying Areas", severity: "low", radiusM: 350, lat: 10.4325, lon: 124.0005, description: null },
-];
-
-const FALLBACK_DATA: MapPageData = {
-  centers: FALLBACK_CENTERS,
-  zones: FALLBACK_ZONES,
-  sensors: FALLBACK_SENSORS,
-  incidents: [],
-};
-
-function sensorPopup(sensor: RiverSensor, color: string): string {
-  const level = sensor.latest?.waterLevelM;
-  const normal = sensor.normalLevelM;
-  const flow = sensor.latest?.flowCms;
-  return `
-    <div style="font-family:inherit;padding:4px 0;min-width:160px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${sensor.name}</div>
-      <div style="font-size:12px;color:#666;margin-bottom:6px">${sensor.stationId ?? ""}</div>
-      <div style="font-size:14px;font-weight:700;color:${color}">${level != null ? level.toFixed(2) : "--"} m <span style="font-weight:400;font-size:11px;color:#666">${normal != null ? `/ ${normal.toFixed(2)}m` : ""}</span></div>
-      <div style="font-size:11px;color:#666;margin-top:2px">Flow: ${flow != null ? `${flow.toFixed(1)} m\u00b3/s` : "--"}</div>
-    </div>`;
-}
-
-function centerPopup(center: MapCenter): string {
-  const statusColor = center.verified ? "#10855a" : "#6b7280";
-  const status = center.verified ? "Designated EC — active during Typhoon Tino (Nov 2025)" : "Unconfirmed — reference only";
-  const roughly = center.notes?.includes("Approximate") ? `\n      <div style="font-size:11px;color:#b45309;margin-top:2px">Approximate location</div>` : "";
-  const directionsHref = center.name === "Weber Hotel" ? WEBER_HOTEL_DIRECTIONS_URL : `https://maps.google.com/?q=${center.lat},${center.lon}`;
-  return `
-    <div style="font-family:inherit;padding:4px 0;min-width:180px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:2px">${center.name}</div>
-      <div style="font-size:11px;color:#666;margin-bottom:6px">${center.sector ?? ""}${center.address ? ` · ${center.address}` : ""}</div>
-      <div style="font-size:11px;color:${statusColor};font-weight:600">\u25cf ${status}</div>
-      <div style="font-size:12px;color:#666;margin-top:4px">Capacity: ${center.capacity != null ? `${center.capacity} persons` : "— (not documented)"}</div>
-      ${center.role ? `\n      <div style="font-size:11px;color:#666;margin-top:2px">${center.role}</div>` : ""}
-      ${center.dataSource ? `\n      <div style="font-size:11px;color:#666;margin-top:2px">Source: ${center.dataSource}</div>` : ""}${roughly}
-      <a href="${directionsHref}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#00685d;font-weight:600;text-decoration:none">Get Directions \u2192</a>
-    </div>`;
-}
-
-function incidentPopup(incident: FloodIncidentSummary, color: string): string {
-  const when = incident.timestamp
-    ? new Date(incident.timestamp).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-    : "";
-  const waterLevelM = incident.waterLevelCm != null ? incident.waterLevelCm / 100 : null;
-  return `
-    <div style="font-family:inherit;padding:4px 0;min-width:170px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${incident.location ?? "Flood Incident"}</div>
-      <div style="font-size:12px;color:#fff;background:${color};display:inline-block;padding:1px 8px;border-radius:999px;margin-bottom:4px">${(incident.severity ?? "unknown").toUpperCase()}</div>
-      <div style="font-size:12px;color:#666">Water level: ${waterLevelM != null ? `${waterLevelM.toFixed(2)} m` : "--"}</div>
-      <div style="font-size:11px;color:#666;margin-top:2px">${when} \u2022 Reported & verified</div>
-    </div>`;
-}
-
-async function resolveMapData(): Promise<MapPageData> {
-  try {
-    const res = await fetch("/api/map-data", { headers: { Accept: "application/json" } });
-    if (!res.ok) return FALLBACK_DATA;
-    const json = (await res.json()) as { data?: Partial<MapPageData> };
-    const data = json.data;
-    if (!data || !Array.isArray(data.centers) || !Array.isArray(data.zones) || !Array.isArray(data.sensors) || !Array.isArray(data.incidents)) {
-      return FALLBACK_DATA;
-    }
-    if (data.centers.length === 0 && data.zones.length === 0 && data.sensors.length === 0) {
-      return FALLBACK_DATA;
-    }
-    return { centers: data.centers, zones: data.zones, sensors: data.sensors, incidents: data.incidents };
-  } catch {
-    return FALLBACK_DATA;
-  }
-}
 
 export default function MapPage() {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapBoxRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<MapWithLayers | null>(null);
-  const [mapData, setMapData] = useState<MapPageData>(FALLBACK_DATA);
-  const [layers, setLayers] = useState({ hazard: true, sensors: true, centers: true });
-  const [fullscreenMode, setFullscreenMode] = useState<"none" | "native" | "css">("none");
+  const mapInstanceRef = useRef<LeafletMap | null>(null);
+  const selectedStationIdRef = useRef<Station["id"]>("cotcot-bridge");
+  const stationMarkersRef = useRef<Record<Station["id"], CircleMarker | null>>({
+    "cotcot-bridge": null,
+    "mulao-bridge": null,
+  });
+  const [selectedStationId, setSelectedStationId] = useState<Station["id"]>("cotcot-bridge");
+  const [mapContainer, setMapContainer] = useState<HTMLDivElement | null>(null);
+  const risk = useDashboardResource<RiskResource>("/api/weather/risk");
+
+  const selectedStation = STATIONS.find((station) => station.id === selectedStationId) ?? STATIONS[0];
 
   useEffect(() => {
-    const onFullscreenChange = () => {
-      setFullscreenMode(document.fullscreenElement === mapBoxRef.current ? "native" : "none");
-    };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+    selectedStationIdRef.current = selectedStationId;
+  }, [selectedStationId]);
+
+  const setMapRef = useCallback((element: HTMLDivElement | null) => {
+    setMapContainer(element);
   }, []);
 
-  const toggleFullscreen = async () => {
-    const el = mapBoxRef.current;
-    if (!el) return;
-    if (document.fullscreenElement === el || fullscreenMode === "native") {
-      await document.exitFullscreen();
-      return;
-    }
-    if (fullscreenMode === "css") {
-      setFullscreenMode("none");
-      return;
-    }
-    if (document.fullscreenEnabled) {
-      try {
-        await el.requestFullscreen({ navigationUI: "hide" });
-        setFullscreenMode("native");
-        return;
-      } catch {
-        // fall through to CSS fullscreen for browsers/contexts without element fullscreen
-      }
-    }
-    setFullscreenMode("css");
-  };
-
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapContainer || mapInstanceRef.current) return;
 
     let cancelled = false;
-    let resizeObserver: ResizeObserver | null = null;
 
-    (async () => {
-      const [resolved, L] = await Promise.all([
-        resolveMapData(),
-        import("leaflet").then((m) => m.default),
-      ]);
+    void (async () => {
+      const L = (await import("leaflet")).default;
       await import("leaflet/dist/leaflet.css");
+      if (cancelled) return;
 
-      if (cancelled || !mapRef.current) return;
-      setMapData(resolved);
-
-      const map = L.map(mapRef.current, {
-        center: [COTCOT.lat, COTCOT.lon],
-        zoom: 14,
+      const initialStation = STATIONS.find((station) => station.id === selectedStationIdRef.current) ?? STATIONS[0];
+      const map = L.map(mapContainer, {
+        center: initialStation.coordinates,
+        zoom: 12,
         zoomControl: false,
         attributionControl: false,
-      }) as MapWithLayers;
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(map);
-
-      L.control.zoom({ position: "topright" }).addTo(map);
-
-      const box = mapBoxRef.current;
-      if (box) {
-        resizeObserver = new ResizeObserver(() => map.invalidateSize());
-        resizeObserver.observe(box);
-      }
-
-      // Flood hazard zones as circular overlays
-      const hazardGroup = L.layerGroup();
-      resolved.zones.forEach((zone) => {
-        if (zone.lat == null || zone.lon == null || zone.radiusM == null) return;
-        const style = ZONE_STYLES[zone.severity] ?? ZONE_STYLES.low;
-        L.circle([zone.lat, zone.lon], {
-          radius: zone.radiusM,
-          color: style.color,
-          fillColor: style.color,
-          fillOpacity: style.fillOpacity,
-          weight: style.weight,
-          dashArray: style.dashArray,
-        }).addTo(hazardGroup);
       });
-      hazardGroup.addTo(map);
 
-      // River water level sensor markers
-      const sensorGroup = L.layerGroup();
-      resolved.sensors.forEach((sensor) => {
-        const color = sensor.status === "alert" ? "#ea580c" : "#00685d";
-        const marker = L.circleMarker([sensor.lat, sensor.lon], { radius: 8, color: "#ffffff", fillColor: color, fillOpacity: 1, weight: 3 });
-        marker.bindPopup(sensorPopup(sensor, color));
-        marker.addTo(sensorGroup);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+
+      STATIONS.forEach((station) => {
+        const marker = L.circleMarker(station.coordinates, {
+          radius: station.id === selectedStationIdRef.current ? 9 : 7,
+          color: "#ffffff",
+          fillColor: station.id === selectedStationIdRef.current ? "#1d4ed8" : "#52657b",
+          fillOpacity: 1,
+          weight: 3,
+        });
+        marker.bindTooltip(station.name, { direction: "top", offset: [0, -8] });
+        marker.on("click", () => setSelectedStationId(station.id));
+        marker.addTo(map);
+        stationMarkersRef.current[station.id] = marker;
       });
-      sensorGroup.addTo(map);
 
-      // Evacuation center markers
-      const centerGroup = L.layerGroup();
-      resolved.centers.forEach((center) => {
-        const pin = center.name === "Weber Hotel" && WEBER_HOTEL ? { ...center, lat: WEBER_HOTEL.lat, lon: WEBER_HOTEL.lon } : center;
-        const marker = L.circleMarker([pin.lat, pin.lon], { radius: 10, color: "#ffffff", fillColor: pin.verified ? "#10855a" : "#6b7280", fillOpacity: 1, weight: 3 });
-        marker.bindPopup(centerPopup(pin));
-        marker.addTo(centerGroup);
-      });
-      centerGroup.addTo(map);
-
-      // Verified flood incident markers
-      const incidentGroup = L.layerGroup();
-      resolved.incidents.forEach((incident) => {
-        if (incident.lat == null || incident.lon == null) return;
-        const color = INCIDENT_COLORS[incident.severity ?? ""] ?? "#dc2626";
-        const marker = L.circleMarker([incident.lat, incident.lon], { radius: 7, color: "#ffffff", fillColor: color, fillOpacity: 0.9, weight: 2 });
-        marker.bindPopup(incidentPopup(incident, color));
-        marker.addTo(incidentGroup);
-      });
-      incidentGroup.addTo(map);
-
-      // Store for toggling
       mapInstanceRef.current = map;
-      map._hazardGroup = hazardGroup;
-      map._sensorGroup = sensorGroup;
-      map._centerGroup = centerGroup;
-      map._incidentGroup = incidentGroup;
+      map.fitBounds(STATIONS.map((station) => station.coordinates), { padding: [28, 28], maxZoom: 13 });
     })();
 
     return () => {
       cancelled = true;
-      resizeObserver?.disconnect();
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      mapInstanceRef.current?.remove();
+      mapInstanceRef.current = null;
     };
-  }, []);
+  }, [mapContainer]);
 
-  const toggleLayer = (key: keyof typeof layers) => {
-    setLayers((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      const map = mapInstanceRef.current;
-      if (!map) return next;
-      const groupKey = key === "hazard" ? "_hazardGroup" : key === "sensors" ? "_sensorGroup" : "_centerGroup";
-      const group = map[groupKey];
-      if (group) {
-        if (next[key]) {
-          map.addLayer(group);
-        } else {
-          map.removeLayer(group);
-        }
-      }
-      return next;
+  useEffect(() => {
+    STATIONS.forEach((station) => {
+      const selected = station.id === selectedStationId;
+      stationMarkersRef.current[station.id]?.setStyle({
+        radius: selected ? 9 : 7,
+        fillColor: selected ? "#1d4ed8" : "#52657b",
+      });
     });
-  };
+  }, [selectedStationId]);
 
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
       <div className="top-scrim sticky top-0 z-[1050]">
         <DashboardHeader />
-       
       </div>
 
-      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 pb-10">
         <ViewTransition
-          enter={{
-            "nav-forward": "nav-forward",
-            "nav-back": "nav-back",
-            default: "none",
-          }}
-          exit={{
-            "nav-forward": "nav-forward",
-            "nav-back": "nav-back",
-            default: "none",
-          }}
+          enter={{ "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" }}
+          exit={{ "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" }}
           default="none"
         >
-        {/* Header & Action Bar */}
-        <Reveal>
-          <div className="flex flex-col gap-4 mb-2">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm uppercase tracking-wider font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent-strong animate-pulse" />
-                  GIS Spatial Telemetry
-                </span>
-                <span className="font-label-sm text-label-sm text-on-sky-faint font-medium">EPSG:4326 WGS84</span>
-              </div>
-              <h1 className="font-headline-lg text-headline-lg text-on-sky tracking-tight">Interactive Flood Risk & GIS Evacuation Map</h1>
-              <p className="font-body-md text-body-md text-on-sky-dim max-w-3xl">Spatial hydrology, monitored stream sensors, flood susceptibility zones, and evacuation routes for Barangay Cotcot.</p>
-            </div>
-
-            {/* Layer Filter Toolbar */}
-            <div className="w-full lg:w-auto glass-card-flat p-2 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="px-3 font-label-sm text-label-sm text-on-sky-faint font-semibold uppercase tracking-wider flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[16px] text-accent-strong">layers</span>
-                  Layers:
-                </span>
-                {(Object.keys(layers) as (keyof typeof layers)[]).map((key) => {
-                  const labels = { hazard: "Flood Hazard Zones", sensors: "River Water Level Sensors", centers: "Evacuation Centers" };
-                  const dotColors = { hazard: "bg-danger", sensors: "bg-watch", centers: "bg-safe" };
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => toggleLayer(key)}
-                      className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-md font-label-md transition ${
-                        layers[key]
-                          ? "bg-accent-fill text-accent-strong shadow-sm"
-                          : "bg-glass text-on-sky-dim"
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${dotColors[key]}`} />
-                      <span className="">{labels[key]}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          </div>
-        </Reveal>
-
-        {/* Map Canvas */}
-        <Reveal delay={0.05}>
-          <div
-            ref={mapBoxRef}
-            className={`relative w-full h-[800px] lg:h-[720px] rounded-3xl overflow-hidden ring-1 ring-glass-border shadow-[var(--sky-shadow)] select-none ${fullscreenMode === "css" ? "map-box-fs" : ""}`}
-          >
-          <div ref={mapRef} className="w-full h-full z-0" />
-
-          {/* Floating Legend Panel */}
-          <div className="absolute top-4 left-4 z-[1000] w-52 sm:w-60 md:w-64 lg:w-72 max-w-[calc(100%-2rem)] flex flex-col gap-2 md:gap-3 pointer-events-none">
-            <div className="pointer-events-auto glass-card-float p-2.5 sm:p-3 lg:p-4">
-              <div className="flex items-center justify-between pb-1.5 mb-1.5 md:pb-2 md:mb-2 border-b border-glass-border">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-watch animate-pulse" />
-                  <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Hydrological Gauges</span>
+          <Reveal>
+            <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-2 flex items-center gap-2 font-label-md text-label-md text-on-sky-dim">
+                  <Radio className="h-4 w-4 text-accent-strong" aria-hidden="true" />
+                  River surveillance
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-accent-fill text-accent-strong font-label-sm text-label-sm font-semibold tracking-tight">{mapData.sensors.length} Simulated</span>
+                <h1 className="font-headline-lg text-headline-lg text-on-sky tracking-tight">Cotcot River Surveillance</h1>
+                <p className="mt-1 font-body-lg text-body-lg text-on-sky-dim">
+                  Planned visual monitoring points for Cotcot River. Direct camera feeds will appear here once authorized and connected.
+                </p>
               </div>
-              <div className="flex flex-col gap-2">
-                {mapData.sensors.map((sensor) => {
-                  const level = sensor.latest?.waterLevelM;
-                  const flow = sensor.latest?.flowCms;
-                  const isAlert = sensor.status === "alert";
-                  return (
-                    <div key={sensor.stationId ?? sensor.id} className="flex items-center justify-between p-1.5 md:p-2 rounded-xl bg-glass">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-sky font-semibold tracking-tight truncate">{sensor.name} ({sensor.stationId ?? "—"})</span>
-                        <span className="hidden sm:block font-label-sm text-label-sm text-on-sky-dim tracking-tight">Flow rate: {flow != null ? `${flow.toFixed(1)} m\u00b3/s` : "—"}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className={`font-title-sm text-title-sm ${isAlert ? "text-warning" : "text-accent-strong"} font-bold tracking-tight`}>{level != null ? `${level.toFixed(2)} m` : "--"}</span>
-                        <div className={`font-label-sm text-label-sm ${isAlert ? "text-warning" : "text-safe"} font-semibold flex items-center gap-0.5 justify-end`}>
-                          <span className="material-symbols-outlined text-[12px]">{isAlert ? "warning" : "check_circle"}</span> {isAlert ? "Elevated" : "Normal"}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="glass-chip w-fit px-3 py-2 font-label-sm text-label-sm text-on-sky-dim">
+                <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-accent-strong" aria-hidden="true" /> Visual monitoring only</span>
               </div>
-            </div>
+            </header>
+          </Reveal>
 
-            {/* Flood Risk Legend */}
-            <div className="pointer-events-auto glass-card-float p-2.5 sm:p-3 lg:p-4">
-              <div className="flex items-center gap-1.5 mb-2">
-                <span className="font-title-sm text-title-sm text-on-sky tracking-tight">Flood Risk Legend</span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {mapData.zones.map((zone) => (
-                  <div key={zone.id} className="flex items-center gap-2 min-w-0">
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: ZONE_STYLES[zone.severity]?.color ?? "#6b7280", opacity: 0.7 }} />
-                    <span className="font-label-sm text-label-sm text-on-sky-dim truncate lg:overflow-visible lg:whitespace-normal">{zone.name}</span>
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <Reveal delay={0.05}>
+              <section aria-labelledby="camera-stage-heading" className="glass-card overflow-hidden">
+                <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-3 sm:px-5">
+                  <div className="min-w-0">
+                    <p className="font-label-sm text-label-sm text-on-sky-faint">Selected station</p>
+                    <h2 id="camera-stage-heading" className="truncate font-title-lg text-title-lg text-on-sky">{selectedStation.name}</h2>
                   </div>
-                ))}
+                  <span className="status-chip bg-watch-fill text-watch shrink-0"><span className="h-1.5 w-1.5 rounded-full bg-watch" /> Feed pending</span>
+                </div>
+
+                <div className="relative aspect-video min-h-[240px] bg-[linear-gradient(135deg,rgba(6,18,39,0.92),rgba(19,52,85,0.72))] px-6 text-center">
+                  <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:32px_32px]" aria-hidden="true" />
+                  <div className="relative flex h-full flex-col items-center justify-center">
+                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 text-accent-strong">
+                      <CameraOff className="h-7 w-7" aria-hidden="true" />
+                    </div>
+                    <p className="font-title-lg text-title-lg text-white">Direct surveillance feed not connected yet</p>
+                    <p className="mt-2 max-w-md font-body-md text-body-md text-white/70">Waiting for authorized camera source. This station will show a verified visual feed when it is available.</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 px-4 py-3 font-label-sm text-label-sm text-on-sky-dim sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                  <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-accent-strong" aria-hidden="true" /> {selectedStation.location}</span>
+                  <span>No automated water-level telemetry</span>
+                </div>
+              </section>
+            </Reveal>
+
+            <Reveal delay={0.1}>
+              <div className="space-y-4">
+                <aside aria-label="Surveillance stations" className="glass-card-flat p-2">
+                  <div className="px-3 py-2">
+                    <h2 className="font-title-sm text-title-sm text-on-sky">Camera stations</h2>
+                    <p className="mt-1 font-label-sm text-label-sm text-on-sky-dim">Two confirmed locations</p>
+                  </div>
+                  <div className="space-y-1">
+                    {STATIONS.map((station) => {
+                      const selected = station.id === selectedStationId;
+                      return (
+                        <button
+                          key={station.id}
+                          type="button"
+                          onClick={() => setSelectedStationId(station.id)}
+                          aria-pressed={selected}
+                          className={`group flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-colors ${selected ? "bg-glass-strong text-on-sky" : "text-on-sky-dim hover:bg-glass"}`}
+                        >
+                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-accent-fill text-accent-strong" : "bg-glass text-on-sky-faint"}`}>
+                            <Camera className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-title-sm text-title-sm">{station.name}</span>
+                            <span className="mt-0.5 block truncate font-label-sm text-label-sm text-on-sky-dim">{station.location}</span>
+                            <span className="mt-1 inline-flex items-center gap-1 font-label-sm text-label-sm text-watch"><span className="h-1.5 w-1.5 rounded-full bg-watch" /> Feed pending</span>
+                          </span>
+                          <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${selected ? "translate-x-0.5 text-accent-strong" : "text-on-sky-faint"}`} aria-hidden="true" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </aside>
               </div>
-            </div>
+            </Reveal>
           </div>
 
-          {/* Bottom Status Strip */}
-          <div className="map-status-strip absolute bottom-0 left-0 right-0 h-12 bg-glass/85 backdrop-blur-md z-[1000] flex items-center justify-between px-4 border-t border-glass-border text-on-sky-dim font-label-sm text-label-sm">
-            <div className="flex items-center gap-4 truncate">
-              <div className="flex items-center gap-1.5 font-medium text-on-sky">
-                <span className="material-symbols-outlined text-[16px] text-accent-strong">pin_drop</span>
-                <span>Center: {COTCOT.lat}° N, {COTCOT.lon}° E • Cotcot, Liloan, Cebu</span>
-              </div>
-              <span className="hidden md:inline text-on-sky-faint">• Elevation not yet verified</span>
-              <span className="hidden lg:inline text-on-sky-faint">• Illustrative zones &amp; sensors</span>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="hidden sm:flex items-center gap-1 text-safe font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-safe" /> Reference Telemetry (Simulated)
-              </span>
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                aria-label={fullscreenMode === "none" ? "Enter map fullscreen" : "Exit map fullscreen"}
-                title={fullscreenMode === "none" ? "Enter fullscreen" : "Exit fullscreen"}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-glass text-on-sky-dim hover:text-accent-strong transition"
-              >
-                <span className="material-symbols-outlined text-[18px]">{fullscreenMode === "none" ? "fullscreen" : "fullscreen_exit"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        </Reveal>
-
-        {/* Action Cards */}
-        <Reveal delay={0.1}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-          <div className="glass-card p-4 flex items-start gap-4 interactive-card">
-            <div className="w-12 h-12 rounded-2xl bg-accent-fill text-accent-strong flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px]">location_searching</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="font-title-sm text-title-sm text-on-sky font-semibold">Center on My Location</span>
-              <p className="font-body-md text-body-md text-on-sky-dim text-xs leading-relaxed">Pinpoint your exact Purok location within Cotcot to verify direct flood risk classification.</p>
-              <button className="mt-1 font-label-md text-label-md text-accent-strong font-semibold hover:underline text-left inline-flex items-center gap-1">
-                Activate GPS Locate <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-          <div className="glass-card p-4 flex items-start gap-4 interactive-card">
-            <div className="w-12 h-12 rounded-2xl bg-accent-fill text-accent-strong flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px]">picture_as_pdf</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="font-title-sm text-title-sm text-on-sky font-semibold">Download Offline Evacuation Map</span>
-              <p className="font-body-md text-body-md text-on-sky-dim text-xs leading-relaxed">High-resolution printable PDF featuring elevation contours, dry footpaths, and emergency shelters.</p>
-              <button className="mt-1 font-label-md text-label-md text-accent-strong font-semibold hover:underline text-left inline-flex items-center gap-1">
-                Download PDF (4.8 MB) <span className="material-symbols-outlined text-[14px]">download</span>
-              </button>
-            </div>
-          </div>
-          <div className="glass-card p-4 flex items-start gap-4 interactive-card">
-            <div className="w-12 h-12 rounded-2xl bg-warning-fill text-warning flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px]">campaign</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="font-title-sm text-title-sm text-on-sky font-semibold">Report Localized Water Pooling</span>
-              <p className="font-body-md text-body-md text-on-sky-dim text-xs leading-relaxed">Submit geo-tagged photographic reports to Barangay Cotcot Disaster Dispatchers in real-time.</p>
-              <button className="mt-1 font-label-md text-label-md text-warning font-semibold hover:underline text-left inline-flex items-center gap-1">
-                Submit Dispatch Report <span className="material-symbols-outlined text-[14px]">send</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        </Reveal>
+          <Reveal delay={0.15}>
+            <section aria-label="River alert status" className="mt-5">
+              <FloodRiskSection
+                resource={risk.state}
+                onRetry={risk.refetch}
+                contextSlot={
+                  <section aria-labelledby="station-map-heading" className="overflow-hidden rounded-2xl border border-glass-border bg-glass">
+                    <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-3">
+                      <div>
+                        <h2 id="station-map-heading" className="font-title-sm text-title-sm text-on-sky">Station context</h2>
+                        <p className="mt-0.5 font-label-sm text-label-sm text-on-sky-dim">Cotcot River Bridge and Mulao Bridge</p>
+                      </div>
+                      <span className="glass-chip shrink-0 px-2.5 py-1.5 font-label-sm text-label-sm text-on-sky-dim">2 stations</span>
+                    </div>
+                    <div className="relative h-[210px] sm:h-[250px]">
+                      <div ref={setMapRef} className="h-full w-full" aria-label="Map showing Cotcot River Bridge and Mulao Bridge camera stations" />
+                    </div>
+                  </section>
+                }
+              />
+            </section>
+          </Reveal>
         </ViewTransition>
       </main>
     </div>

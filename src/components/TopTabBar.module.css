@@ -56,9 +56,15 @@
 /* ── Brand lockup (in the bar at every width) ── */
 
 .brand {
-  display: flex;
+  display: none;
   align-items: center;
   flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .brand {
+    display: flex;
+  }
 }
 
 /* ── Navigation shell ── */

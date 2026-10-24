@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ShieldAlert, CloudRain, WavesArrowUp } from "lucide-react";
 import type { AlertLevel } from "@/lib/constants";
 import AnimatedNumber from "@/components/motion/AnimatedNumber";
@@ -11,6 +12,7 @@ interface FloodRiskCardProps {
   rainfall1h?: number;
   windSpeed?: number;
   lastUpdated?: string;
+  contextSlot?: ReactNode;
 }
 
 const levelConfig = {
@@ -63,7 +65,7 @@ const recommendedActions: Record<AlertLevel, string> = {
   danger: "Avoid flood-prone areas and follow official emergency instructions.",
 };
 
-export default function FloodRiskCard({ level, riskScore, lastUpdated }: FloodRiskCardProps) {
+export default function FloodRiskCard({ level, riskScore, lastUpdated, contextSlot }: FloodRiskCardProps) {
   const config = levelConfig[level];
   const updatedDate = lastUpdated ? new Date(lastUpdated) : null;
   const updatedText = updatedDate && !Number.isNaN(updatedDate.getTime())
@@ -166,6 +168,8 @@ export default function FloodRiskCard({ level, riskScore, lastUpdated }: FloodRi
             </div>
           </div>
         </div>
+
+        {contextSlot}
       </div>
 
       {/* Recommended action */}
