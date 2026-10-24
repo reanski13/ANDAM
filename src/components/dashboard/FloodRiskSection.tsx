@@ -1,6 +1,7 @@
 "use client";
 
 import FloodRiskCard from "@/components/FloodRiskCard";
+import type { ReactNode } from "react";
 import ResourceUnavailable from "@/components/dashboard/ResourceUnavailable";
 import { Skeleton } from "@/components/dashboard/Skeleton";
 import type { ResourceState, RiskResource } from "@/lib/dashboard/types";
@@ -8,12 +9,13 @@ import type { ResourceState, RiskResource } from "@/lib/dashboard/types";
 interface FloodRiskSectionProps {
   resource: ResourceState<RiskResource>;
   onRetry: () => void;
+  contextSlot?: ReactNode;
 }
 
-function FloodRiskSkeleton() {
+function FloodRiskSkeleton({ contextSlot }: Pick<FloodRiskSectionProps, "contextSlot">) {
   return (
-    <div className="glass-card h-full p-6 flex flex-col justify-between gap-4" aria-hidden="true">
-      <div className="flex flex-col gap-4">
+    <div className="glass-card h-full p-6 flex flex-col gap-4">
+      <div className="flex flex-col gap-4" aria-hidden="true">
         <div className="flex items-center justify-between gap-2">
           <Skeleton className="h-6 w-24 rounded-full" />
           <Skeleton className="h-4 w-28" />
@@ -34,19 +36,21 @@ function FloodRiskSkeleton() {
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-3 w-3/4" />
       </div>
+      {contextSlot}
     </div>
   );
 }
 
-export default function FloodRiskSection({ resource, onRetry }: FloodRiskSectionProps) {
+export default function FloodRiskSection({ resource, onRetry, contextSlot }: FloodRiskSectionProps) {
   if (resource.status === "loading") {
-    return <FloodRiskSkeleton />;
+    return <FloodRiskSkeleton contextSlot={contextSlot} />;
   }
 
   if (resource.status === "unavailable") {
     return (
-      <div className="glass-card h-full p-6 flex flex-col justify-center">
+      <div className="glass-card h-full p-6 flex flex-col gap-4">
         <ResourceUnavailable icon="sensors_off" message={resource.message} onRetry={onRetry} />
+        {contextSlot}
       </div>
     );
   }
@@ -59,6 +63,7 @@ export default function FloodRiskSection({ resource, onRetry }: FloodRiskSection
       riskScore={riskScore}
       reasons={reasons}
       lastUpdated={resource.fetchedAt}
+      contextSlot={contextSlot}
     />
   );
 }
