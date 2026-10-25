@@ -111,6 +111,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          granted_at: string
+          granted_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       evacuation_centers: {
         Row: {
           address: string | null
@@ -693,10 +714,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_revoke_user_role: {
+        Args: { p_reason: string; p_target_user_id: string }
+        Returns: undefined
+      }
+      admin_set_user_role: {
+        Args: {
+          p_reason: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_target_user_id: string
+        }
+        Returns: undefined
+      }
+      current_app_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["app_role"] | null }
+      is_administrator: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "administrator" | "incident_commander" | "shelter_registrar" | "bdrrmo_coordinator" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -826,6 +860,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["administrator", "incident_commander", "shelter_registrar", "bdrrmo_coordinator", "viewer"],
+    },
   },
 } as const
