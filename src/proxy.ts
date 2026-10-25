@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
+import { isAppRole } from "@/lib/authorization/roles";
 
 const LOGIN_PATH = "/admin/login";
 
@@ -37,14 +38,26 @@ export async function proxy(request: NextRequest) {
   const isOfficial = metadata?.is_official === true;
   const { pathname } = request.nextUrl;
 
-  if (isOfficial || pathname === LOGIN_PATH) {
+  if (pathname === LOGIN_PATH) {
     return response;
   }
 
+  const { data: role } = user ? await supabase.rpc("current_app_role") : { data: null };
+  if (isAppRole(role)) return response;
+
+  // Existing official accounts reach a server-rendered access-denied state until
+  // an Administrator provisions their database-backed role.
+  if (isOfficial && !pathname.startsWith("/api/admin")) return response;
+
   if (pathname.startsWith("/api/admin")) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "Official access required." } },
-      { status: 401 }
+      {
+        error: {
+          code: user ? "FORBIDDEN" : "UNAUTHORIZED",
+          message: user ? "A current official role is required." : "Authentication is required.",
+        },
+      },
+      { status: user ? 403 : 401 }
     );
   }
 

@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { ViewTransition } from "react";
-import TopTabBar from "@/components/TopTabBar";
+import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import Reveal from "@/components/motion/Reveal";
-import { getCurrentUser, isOfficial } from "@/lib/supabase/server";
+import { getAuthorizationContext } from "@/lib/authorization/server";
+import { hasCapability, ROLE_LABELS } from "@/lib/authorization/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -13,21 +14,17 @@ export const metadata = {
 };
 
 export default async function AdminPage() {
-  const user = await getCurrentUser();
-  if (!isOfficial(user)) {
+  const { user, role } = await getAuthorizationContext();
+  if (!user) {
     redirect("/admin/login");
   }
+  if (!hasCapability(role, "admin.dashboard.read")) redirect("/admin/access-denied");
 
   const displayName =
-    (user!.user_metadata as Record<string, unknown> | undefined)?.name as string | undefined ?? user!.email ?? "Official";
-  const roleText =
-    (user!.user_metadata as Record<string, unknown> | undefined)?.role as string | undefined ?? "Accredited Official";
+    (user.user_metadata as Record<string, unknown> | undefined)?.name as string | undefined ?? user.email ?? "Official";
+  const roleText = ROLE_LABELS[role!];
   return (
     <div className="sky-surface min-h-screen flex flex-col" data-sky="clouds">
-      <div className="top-scrim sticky top-0 z-[1050]">
-        <TopTabBar />
-      </div>
-
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
         <ViewTransition
           enter={{
@@ -65,7 +62,13 @@ export default async function AdminPage() {
               <span className="material-symbols-outlined text-[16px] text-accent-strong">shield_person</span>
               {displayName} · {roleText}
             </span>
-            <LogoutButton />
+             <LogoutButton />
+             {hasCapability(role, "admin.roles.manage") && (
+               <Link href="/admin/users" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-glass text-on-sky hover:bg-glass-elevated font-title-sm transition duration-200 active:scale-95">
+                 <span className="material-symbols-outlined text-[18px] text-accent-strong">manage_accounts</span>
+                 Manage access
+               </Link>
+             )}
             <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-glass text-on-sky hover:bg-glass-elevated font-title-sm transition duration-200 active:scale-95">
               <span className="material-symbols-outlined text-[18px] text-accent-strong">picture_as_pdf</span>
               Export SitRep (PDF)
