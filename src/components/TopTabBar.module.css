@@ -56,14 +56,20 @@
 /* ── Brand lockup (in the bar at every width) ── */
 
 .brand {
-  display: none;
+  display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-@media (min-width: 1024px) {
-  .brand {
-    display: flex;
+/* Keep the full lockup visible on narrow screens without forcing the icon tabs
+   beyond the viewport. Larger breakpoints retain their roomier default sizing. */
+@media (max-width: 479px) {
+  .brand :global(img) {
+    height: 1.75rem;
+  }
+
+  .tab {
+    padding-inline: 0.65rem;
   }
 }
 

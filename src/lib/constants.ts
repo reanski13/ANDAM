@@ -41,9 +41,9 @@ export type AlertLevel = "safe" | "watch" | "warning" | "danger";
 
 export const ALERT_LEVELS: Record<AlertLevel, { label: string; color: string; bgColor: string; icon: string }> = {
   safe: {
-    label: "Safe",
-    color: "text-green-700",
-    bgColor: "bg-green-500",
+    label: "Blue Alert",
+    color: "text-blue-700",
+    bgColor: "bg-blue-600",
     icon: "✓",
   },
   watch: {

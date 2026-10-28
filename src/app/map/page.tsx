@@ -15,7 +15,25 @@ type Station = {
   location: string;
   coordinates: [number, number];
   note: string;
+  feedStatus: "live" | "unavailable";
 };
+
+const FEED_STATUS = {
+  live: {
+    label: "Live feed",
+    detail: "Verified visual feed available",
+    dotClassName: "bg-safe",
+    textClassName: "text-safe",
+    badgeClassName: "bg-safe-fill text-safe",
+  },
+  unavailable: {
+    label: "Feed unavailable",
+    detail: "No authorized camera source",
+    dotClassName: "bg-warning",
+    textClassName: "text-warning",
+    badgeClassName: "bg-warning-fill text-warning",
+  },
+} as const;
 
 const STATIONS: Station[] = [
   {
@@ -24,6 +42,7 @@ const STATIONS: Station[] = [
     location: "Near Welcome to Compostela sign",
     coordinates: [10.430223653221535, 124.00315014253883],
     note: "Camera source authorization is pending.",
+    feedStatus: "unavailable",
   },
   {
     id: "mulao-bridge",
@@ -31,6 +50,7 @@ const STATIONS: Station[] = [
     location: "Mulao, Liloan",
     coordinates: [10.476531365364663, 123.94633531592825],
     note: "Camera source authorization is pending.",
+    feedStatus: "unavailable",
   },
 ];
 
@@ -46,6 +66,7 @@ export default function MapPage() {
   const risk = useDashboardResource<RiskResource>("/api/weather/risk");
 
   const selectedStation = STATIONS.find((station) => station.id === selectedStationId) ?? STATIONS[0];
+  const selectedFeedStatus = FEED_STATUS[selectedStation.feedStatus];
 
   useEffect(() => {
     selectedStationIdRef.current = selectedStationId;
@@ -140,60 +161,68 @@ export default function MapPage() {
             </header>
           </Reveal>
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <Reveal delay={0.05}>
-              <section aria-labelledby="camera-stage-heading" className="glass-card overflow-hidden">
-                <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-3 sm:px-5">
-                  <div className="min-w-0">
-                    <p className="font-label-sm text-label-sm text-on-sky-faint">Selected station</p>
-                    <h2 id="camera-stage-heading" className="truncate font-title-lg text-title-lg text-on-sky">{selectedStation.name}</h2>
-                  </div>
-                  <span className="status-chip bg-watch-fill text-watch shrink-0"><span className="h-1.5 w-1.5 rounded-full bg-watch" /> Feed pending</span>
-                </div>
-
-                <div className="relative aspect-video min-h-[240px] bg-[linear-gradient(135deg,rgba(6,18,39,0.92),rgba(19,52,85,0.72))] px-6 text-center">
-                  <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:32px_32px]" aria-hidden="true" />
-                  <div className="relative flex h-full flex-col items-center justify-center">
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 text-accent-strong">
-                      <CameraOff className="h-7 w-7" aria-hidden="true" />
+          <Reveal delay={0.05}>
+            <section aria-label="Surveillance monitoring" className="glass-card overflow-hidden">
+              <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem]">
+                <section aria-labelledby="camera-stage-heading" className="min-w-0">
+                  <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-3 sm:px-5">
+                    <div className="min-w-0">
+                      <p className="font-label-sm text-label-sm text-on-sky-faint">Selected station</p>
+                      <h3 id="camera-stage-heading" className="truncate font-title-lg text-title-lg text-on-sky">{selectedStation.name}</h3>
                     </div>
-                    <p className="font-title-lg text-title-lg text-white">Direct surveillance feed not connected yet</p>
-                    <p className="mt-2 max-w-md font-body-md text-body-md text-white/70">Waiting for authorized camera source. This station will show a verified visual feed when it is available.</p>
+                    <span className={`status-chip shrink-0 ${selectedFeedStatus.badgeClassName}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${selectedFeedStatus.dotClassName}`} />
+                      {selectedFeedStatus.label}
+                    </span>
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-2 px-4 py-3 font-label-sm text-label-sm text-on-sky-dim sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                  <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-accent-strong" aria-hidden="true" /> {selectedStation.location}</span>
-                  <span>No automated water-level telemetry</span>
-                </div>
-              </section>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <div className="space-y-4">
-                <aside aria-label="Surveillance stations" className="glass-card-flat p-2">
-                  <div className="px-3 py-2">
-                    <h2 className="font-title-sm text-title-sm text-on-sky">Camera stations</h2>
-                    <p className="mt-1 font-label-sm text-label-sm text-on-sky-dim">Two confirmed locations</p>
+                  <div className="relative aspect-video bg-[linear-gradient(135deg,rgba(6,18,39,0.92),rgba(19,52,85,0.72))] px-6 text-center">
+                    <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:32px_32px]" aria-hidden="true" />
+                    <div className="relative flex h-full flex-col items-center justify-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 text-warning">
+                        <CameraOff className="h-7 w-7" aria-hidden="true" />
+                      </div>
+                      <p className="font-title-lg text-title-lg text-white">No live feed is available</p>
+                      <p className="mt-2 max-w-md font-body-md text-body-md text-white/70">{selectedStation.note} A verified visual feed will appear here when it becomes available.</p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
+
+                  <div className="flex flex-col gap-2 px-4 py-3 font-label-sm text-label-sm text-on-sky-dim sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-accent-strong" aria-hidden="true" /> {selectedStation.location}</span>
+                    <span>No automated water-level telemetry</span>
+                  </div>
+                </section>
+
+                <aside aria-label="Camera stations" className="border-t border-glass-border p-3 lg:border-t-0 lg:border-l">
+                  <div className="px-1 pb-2">
+                    <h3 className="font-title-sm text-title-sm text-on-sky">Camera stations</h3>
+                    <p className="mt-1 font-label-sm text-label-sm text-on-sky-dim">Select a station to update the monitoring area.</p>
+                  </div>
+                  <div className="space-y-2">
                     {STATIONS.map((station) => {
                       const selected = station.id === selectedStationId;
+                      const feedStatus = FEED_STATUS[station.feedStatus];
                       return (
                         <button
                           key={station.id}
                           type="button"
                           onClick={() => setSelectedStationId(station.id)}
                           aria-pressed={selected}
-                          className={`group flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-colors ${selected ? "bg-glass-strong text-on-sky" : "text-on-sky-dim hover:bg-glass"}`}
+                          className={`group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong ${selected ? "border-accent-strong bg-accent-fill text-on-sky" : "border-transparent bg-glass text-on-sky-dim hover:border-glass-border hover:bg-glass-elevated"}`}
                         >
-                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-accent-fill text-accent-strong" : "bg-glass text-on-sky-faint"}`}>
+                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-accent-strong text-white" : "bg-glass text-on-sky-faint"}`}>
                             <Camera className="h-4 w-4" aria-hidden="true" />
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate font-title-sm text-title-sm">{station.name}</span>
+                            <span className="flex items-center gap-1.5">
+                              <span className="truncate font-title-sm text-title-sm">{station.name}</span>
+                              {selected && <span className="shrink-0 font-label-sm text-label-sm font-semibold text-accent-strong">Selected</span>}
+                            </span>
                             <span className="mt-0.5 block truncate font-label-sm text-label-sm text-on-sky-dim">{station.location}</span>
-                            <span className="mt-1 inline-flex items-center gap-1 font-label-sm text-label-sm text-watch"><span className="h-1.5 w-1.5 rounded-full bg-watch" /> Feed pending</span>
+                            <span className={`mt-1 inline-flex items-center gap-1 font-label-sm text-label-sm ${feedStatus.textClassName}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${feedStatus.dotClassName}`} />
+                              {feedStatus.detail}
+                            </span>
                           </span>
                           <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${selected ? "translate-x-0.5 text-accent-strong" : "text-on-sky-faint"}`} aria-hidden="true" />
                         </button>
@@ -202,8 +231,8 @@ export default function MapPage() {
                   </div>
                 </aside>
               </div>
-            </Reveal>
-          </div>
+            </section>
+          </Reveal>
 
           <Reveal delay={0.15}>
             <section aria-label="River alert status" className="mt-5">

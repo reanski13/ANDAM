@@ -17,14 +17,14 @@ interface FloodRiskCardProps {
 
 const levelConfig = {
   safe: {
-    label: "SAFE",
-    hazardLabel: "Low Hazard",
-    pillBg: "bg-safe-fill",
-    pillText: "text-safe",
-    dotColor: "bg-safe",
-    meterColor: "bg-safe",
-    checkBg: "bg-safe-fill",
-    checkColor: "text-safe",
+    label: "BLUE ALERT",
+    hazardLabel: "Low hazard",
+    pillBg: "bg-accent-fill",
+    pillText: "text-accent-strong",
+    dotColor: "bg-accent-strong",
+    meterColor: "bg-accent-strong",
+    checkBg: "bg-accent-fill",
+    checkColor: "text-accent-strong",
   },
   watch: {
     label: "WATCH",
@@ -79,7 +79,7 @@ export default function FloodRiskCard({ level, riskScore, lastUpdated, contextSl
     : "Unavailable";
 
   const meterStops = [
-    { id: "safe", className: "bg-safe", width: 25, active: riskScore < 20 },
+    { id: "safe", className: "bg-accent-strong", width: 25, active: riskScore < 20 },
     { id: "watch", className: "bg-watch", width: 20, active: riskScore >= 20 && riskScore < 40 },
     { id: "warning", className: "bg-warning", width: 25, active: riskScore >= 40 && riskScore < 60 },
     { id: "danger", className: "bg-danger", width: 30, active: riskScore >= 60 },
@@ -134,7 +134,7 @@ export default function FloodRiskCard({ level, riskScore, lastUpdated, contextSl
             ))}
           </div>
           <div className="flex justify-between text-label-sm font-label-sm text-on-sky-faint px-1">
-            <span>0 Normal</span>
+            <span className={level === "safe" ? "text-accent-strong font-semibold" : ""}>0 Blue Alert</span>
             <span className={level === "watch" ? "text-watch font-semibold" : ""}>20 Watch</span>
             <span className={level === "warning" ? "text-warning font-semibold" : ""}>40 Warning</span>
             <span className={level === "danger" ? "text-danger font-semibold" : ""}>60 Critical</span>
